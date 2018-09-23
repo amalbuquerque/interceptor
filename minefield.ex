@@ -1,11 +1,12 @@
 defmodule Outsider do
-  def count(message), do: IO.puts("OUTSIDE!!! #{message}")
+  def count(message), do
+    IO.puts("OUTSIDE!!! #{message}")
+    42
+  end
 end
 
 defmodule Intercept do
   defmacro me([do: {_block, _metadata, definitions} = do_block]) do
-    # IO.inspect(definitions)
-
     updated_do_block = definitions
                       |> Enum.map(&add_calls/1)
                       |> update_block_definitions(do_block)
@@ -18,7 +19,8 @@ defmodule Intercept do
       Kernel.apply(Outsider, :count, ["Hi there"])
     end
 
-    new_function_body = prepend_to_function_body(function_body, quoted_call)
+    # new_function_body = prepend_to_function_body(function_body, quoted_call)
+    new_function_body = append_to_function_body(function_body, quoted_call)
 
     new_function = function
     |> put_elem(2, [function_hdr | [[do: new_function_body]]])
@@ -35,7 +37,6 @@ defmodule Intercept do
     something_else
   end
 
-
   defp prepend_to_function_body({:__block__, _metadata, statements} = body, quoted_call) do
     body
     |> put_elem(2, [quoted_call | statements])
@@ -43,6 +44,37 @@ defmodule Intercept do
 
   defp prepend_to_function_body(single_statement, quoted_call) do
     {:__block__, [], [quoted_call, single_statement]}
+  end
+
+  defp append_to_function_body({:__block__, _metadata, statements} = body, quoted_call) do
+    last_statement = Enum.at(statements, -1)
+
+    new_last_statements = return_statement_result_after_quoted_call(last_statement, quoted_call)
+
+    new_statements = Enum.take(statements, length(statements) - 1) ++ new_last_statements
+
+    {:__block__, [], new_statements}
+  end
+
+  defp append_to_function_body(single_statement, quoted_call) do
+    {:__block__, [], return_statement_result_after_quoted_call(single_statement, quoted_call)}
+  end
+
+  defp return_statement_result_after_quoted_call(statement, quoted_call) do
+    # TODO: Randomly generate this
+    new_result_var = :qwerty
+
+    [ # first we store the statement result
+      {:=, [],
+      [
+        {new_result_var, [], nil},
+        statement,
+      ]},
+      # then we call the interceptor function
+      quoted_call,
+      # finally we return the result
+      {new_result_var, [], nil}
+    ]
   end
 
   defp update_block_definitions(new_definitions, {_block, _metadata, _definitions} = do_block) do
@@ -58,6 +90,10 @@ defmodule Foo do
     def abc(x) do
       IO.puts("Hey abc #{x}")
       IO.puts("second entry")
+      ccc = 33
+      |> Kernel.+(2)
+      |> Kernel.-(12)
+      ccc
     end
 
     def yyy(), do: IO.puts("alo from yyy")
