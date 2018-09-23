@@ -49,7 +49,7 @@ defmodule Intercept do
   defp append_to_function_body({:__block__, _metadata, statements} = body, quoted_call) do
     last_statement = Enum.at(statements, -1)
 
-    new_last_statements = return_statement_result_after_quoted_call(last_statement, quoted_call)
+    {_result_var, new_last_statements} = return_statement_result_after_quoted_call(last_statement, quoted_call)
 
     new_statements = Enum.take(statements, length(statements) - 1) ++ new_last_statements
 
@@ -57,24 +57,29 @@ defmodule Intercept do
   end
 
   defp append_to_function_body(single_statement, quoted_call) do
-    {:__block__, [], return_statement_result_after_quoted_call(single_statement, quoted_call)}
+    {_result_var, new_last_statements} = return_statement_result_after_quoted_call(single_statement, quoted_call)
+
+    {:__block__, [], new_last_statements}
   end
 
   defp return_statement_result_after_quoted_call(statement, quoted_call) do
     # TODO: Randomly generate this
     new_result_var = :qwerty
 
-    [ # first we store the statement result
-      {:=, [],
-      [
-        {new_result_var, [], nil},
-        statement,
-      ]},
-      # then we call the interceptor function
-      quoted_call,
-      # finally we return the result
-      {new_result_var, [], nil}
-    ]
+    {
+      new_result_var,
+      [ # first we store the statement result
+        {:=, [],
+        [
+          {new_result_var, [], nil},
+          statement,
+        ]},
+        # then we call the interceptor function
+        quoted_call,
+        # finally we return the result
+        {new_result_var, [], nil}
+      ]
+    }
   end
 
   defp update_block_definitions(new_definitions, {_block, _metadata, _definitions} = do_block) do
