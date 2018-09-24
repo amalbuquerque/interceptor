@@ -59,7 +59,8 @@ defmodule Intercept do
     new_function = function
     |> put_elem(2, [function_hdr | [[do: new_function_body]]])
 
-    new_function
+    IO.puts("##################### RESULT")
+    IO.inspect(new_function)
   end
 
   defp add_calls({:defp, _metadata, [function_hdr | [[do: function_body]]]} = function, _current_module) do
@@ -70,13 +71,22 @@ defmodule Intercept do
     something_else
   end
 
-  def wrap_do_in_try_catch(function_body, mfa, {success_module, success_func}, {error_module, error_func}) do
-    new_var_name = :abcdefghi # TODO: Generate randomly
+  def wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
+    start_time_var_name = :blhargblharg # TODO: Generate randomly
+    start_time_assignment = quote do
+      var!(unquote(Macro.var(start_time_var_name, module))) = :os.system_time(:microsecond)
+    end
+    function_body = prepend_to_function_body(function_body, start_time_assignment)
 
+    result_var_name = :abcdefghi # TODO: Generate randomly
     # TODO: Horrible hack, try to use the suggested way
     # by Valim https://groups.google.com/forum/#!topic/elixir-lang-talk/maki_LbLLVI
     new_var_not_hygienic = quote do
-      var!(unquote(Macro.var(new_var_name, nil)))
+      var!(unquote(Macro.var(result_var_name, module)))
+    end
+
+    time_var_not_hygienic = quote do
+      var!(unquote(Macro.var(start_time_var_name, module)))
     end
 
     # append the success call to end of the function body
@@ -84,11 +94,12 @@ defmodule Intercept do
       success_module: success_module,
       success_func: success_func,
       mfa: Macro.escape(mfa),
-      result_var: new_var_not_hygienic
+      result_var: new_var_not_hygienic,
+      time_var: time_var_not_hygienic
     ] do
-      Kernel.apply(success_module, success_func, [mfa, result_var])
+      Kernel.apply(success_module, success_func, [mfa, result_var, time_var])
     end
-    new_function_body = append_to_function_body(function_body, quoted_success_call, new_var_name)
+    new_function_body = append_to_function_body(function_body, quoted_success_call, result_var_name)
 
     escaped_mfa = Macro.escape(mfa)
     try_catch_block = quote do
