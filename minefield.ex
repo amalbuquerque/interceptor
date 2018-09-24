@@ -1,7 +1,15 @@
 defmodule Outsider do
-  def count(message), do
+  def count(message) do
     IO.puts("OUTSIDE!!! #{message}")
     42
+  end
+
+  def on_success(mfa, result, time_it_took \\ nil) do
+    IO.puts("IT WORKED #{mfa}, took #{time_it_took} light-years. Here's the result #{inspect(result)}")
+  end
+
+  def on_error(mfa, error, time_it_took \\ nil) do
+    IO.puts("IT failed miserably #{mfa}, took #{time_it_took} light-years. Here's the error #{inspect(error)}")
   end
 end
 
@@ -20,7 +28,8 @@ defmodule Intercept do
     end
 
     # new_function_body = prepend_to_function_body(function_body, quoted_call)
-    new_function_body = append_to_function_body(function_body, quoted_call)
+    # new_function_body = append_to_function_body(function_body, quoted_call)
+    new_function_body = wrap_do_in_try_catch(function_body, {Outsider, :on_success}, {Outsider, :on_error})
 
     new_function = function
     |> put_elem(2, [function_hdr | [[do: new_function_body]]])
@@ -37,6 +46,36 @@ defmodule Intercept do
     something_else
   end
 
+  def wrap_do_in_try_catch(function_body, {success_module, success_func}, {error_module, error_func}) do
+    new_var_name = :abcdefghi # TODO: Generate randomly
+
+    # TODO: Horrible hack, try to use the suggested way
+    # by Valim https://groups.google.com/forum/#!topic/elixir-lang-talk/maki_LbLLVI
+    new_var_not_hygienic = quote do
+      var!(unquote(Macro.var(new_var_name, nil)))
+    end
+
+    # append the success call to end of the function body
+    quoted_success_call = quote bind_quoted: [
+      success_module: success_module,
+      success_func: success_func,
+      result_var: new_var_not_hygienic
+    ] do
+      Kernel.apply(success_module, success_func, ["TODO: MFA", result_var])
+    end
+    new_function_body = append_to_function_body(function_body, quoted_success_call, new_var_name)
+
+    try_catch_block = quote do
+      try do
+        unquote(new_function_body)
+      rescue
+        error ->
+          Kernel.apply(unquote(error_module), unquote(error_func), ["TODO: MFA", error])
+          raise(error)
+      end
+    end
+  end
+
   defp prepend_to_function_body({:__block__, _metadata, statements} = body, quoted_call) do
     body
     |> put_elem(2, [quoted_call | statements])
@@ -46,25 +85,28 @@ defmodule Intercept do
     {:__block__, [], [quoted_call, single_statement]}
   end
 
-  defp append_to_function_body({:__block__, _metadata, statements} = body, quoted_call) do
+  defp append_to_function_body(body, quoted_call, new_var_name \\ nil)
+  defp append_to_function_body({:__block__, _metadata, statements} = body, quoted_call, new_var_name) do
     last_statement = Enum.at(statements, -1)
 
-    {_result_var, new_last_statements} = return_statement_result_after_quoted_call(last_statement, quoted_call)
+    {_result_var, new_last_statements} = return_statement_result_after_quoted_call(last_statement, quoted_call, new_var_name)
 
     new_statements = Enum.take(statements, length(statements) - 1) ++ new_last_statements
 
     {:__block__, [], new_statements}
   end
 
-  defp append_to_function_body(single_statement, quoted_call) do
-    {_result_var, new_last_statements} = return_statement_result_after_quoted_call(single_statement, quoted_call)
+  defp append_to_function_body(single_statement, quoted_call, new_var_name) do
+    {_result_var, new_last_statements} = return_statement_result_after_quoted_call(single_statement, quoted_call, new_var_name)
 
     {:__block__, [], new_last_statements}
   end
 
-  defp return_statement_result_after_quoted_call(statement, quoted_call) do
-    # TODO: Randomly generate this
-    new_result_var = :qwerty
+  defp return_statement_result_after_quoted_call(statement, quoted_call, new_var_name \\ nil) do
+    new_result_var = case new_var_name do
+      nil -> :qwerty # TODO: Randomly generate this
+      _ -> new_var_name
+    end
 
     {
       new_result_var,
@@ -99,6 +141,13 @@ defmodule Foo do
       |> Kernel.+(2)
       |> Kernel.-(12)
       ccc
+    end
+
+    def err(x) do
+      IO.puts("inside err")
+      4+5
+      33/0
+      9+8
     end
 
     def yyy(), do: IO.puts("alo from yyy")
