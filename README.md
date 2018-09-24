@@ -1,6 +1,6 @@
 # Interceptor
 
-**TODO: Add description**
+Library to easily intercept Elixir function calls.
 
 ## Installation
 
