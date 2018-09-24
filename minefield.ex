@@ -12,11 +12,21 @@ defmodule Outsider do
     42
   end
 
-  def on_success(mfa, result, time_it_took \\ nil) do
+  def on_success(mfa, result, started_at_microseconds \\ nil) do
+    time_it_took = case started_at_microseconds do
+      nil -> "I don't know"
+      _ -> :os.system_time(:microsecond) - started_at_microseconds
+    end
+
     IO.puts("IT WORKED #{inspect(mfa)}, took #{time_it_took} light-years. Here's the result #{inspect(result)}")
   end
 
-  def on_error(mfa, error, time_it_took \\ nil) do
+  def on_error(mfa, error, started_at_microseconds \\ nil) do
+    time_it_took = case started_at_microseconds do
+      nil -> "I don't know"
+      _ -> :os.system_time(:microsecond) - started_at_microseconds
+    end
+
     IO.puts("IT failed miserably #{inspect(mfa)}, took #{time_it_took} light-years. Here's the error #{inspect(error)}")
   end
 end
@@ -73,10 +83,10 @@ defmodule Intercept do
 
   def wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
     start_time_var_name = :blhargblharg # TODO: Generate randomly
-    start_time_assignment = quote do
-      var!(unquote(Macro.var(start_time_var_name, module))) = :os.system_time(:microsecond)
-    end
-    function_body = prepend_to_function_body(function_body, start_time_assignment)
+    # start_time_assignment = quote do
+    #   var!(unquote(Macro.var(start_time_var_name, module))) = :os.system_time(:microsecond)
+    # end
+    # function_body = prepend_to_function_body(function_body, start_time_assignment)
 
     result_var_name = :abcdefghi # TODO: Generate randomly
     # TODO: Horrible hack, try to use the suggested way
@@ -103,12 +113,13 @@ defmodule Intercept do
 
     escaped_mfa = Macro.escape(mfa)
     try_catch_block = quote do
+      unquote(time_var_not_hygienic) = :os.system_time(:microsecond)
       try do
         unquote(new_function_body)
       rescue
         error ->
-          Kernel.apply(unquote(error_module), unquote(error_func), [unquote(escaped_mfa), error])
-          raise(error)
+          Kernel.apply(unquote(error_module), unquote(error_func), [unquote(escaped_mfa), error, unquote(time_var_not_hygienic)])
+          reraise(error, __STACKTRACE__)
       end
     end
   end
