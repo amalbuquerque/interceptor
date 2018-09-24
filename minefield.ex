@@ -1,6 +1,14 @@
 defmodule Outsider do
-  def count(message) do
-    IO.puts("OUTSIDE!!! #{message}")
+  # used when we want to intercept *before* the function starts
+  def on_before({module, function, arity} = mfa) do
+    IO.puts("BEFORE #{inspect(mfa)}")
+    42
+  end
+
+  # used when we want to intercept *after* the function completes
+  def on_after({module, function, arity} = mfa, result) do
+    IO.puts("AFTER #{inspect(mfa)}")
+    IO.puts("AFTER #{inspect(result)}")
     42
   end
 
@@ -16,33 +24,49 @@ end
 defmodule Intercept do
   defmacro me([do: {_block, _metadata, definitions} = do_block]) do
     updated_do_block = definitions
-                      |> Enum.map(&add_calls/1)
+                       |> Enum.map(&(add_calls(&1, __CALLER__.module)))
                       |> update_block_definitions(do_block)
 
     [do: updated_do_block]
   end
 
-  def add_calls({:def, _metadata, [function_hdr | [[do: function_body]]]} = function) do
-    quoted_call = quote do
-      Kernel.apply(Outsider, :count, ["Hi there"])
-    end
+  defp get_mfa(current_module, function_header) do
+    {function, _context, args} = function_header
+    {current_module, function, length(args)}
+  end
 
-    # new_function_body = prepend_to_function_body(function_body, quoted_call)
-    # new_function_body = append_to_function_body(function_body, quoted_call)
-    new_function_body = wrap_do_in_try_catch(function_body, {Outsider, :on_success}, {Outsider, :on_error})
+  defp add_calls({:def, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) do
+    mfa = get_mfa(current_module, function_hdr)
+
+    # BEFORE CALL
+    # before_quoted_call = quote bind_quoted: [mfa: Macro.escape(mfa)] do
+    #   Kernel.apply(Outsider, :on_before, [mfa])
+    # end
+    # new_function_body = prepend_to_function_body(function_body, before_quoted_call)
+
+    # AFTER CALL
+    new_var_name = :qwertyqwerty
+    new_var_not_hygienic = quote do
+      var!(unquote(Macro.var(new_var_name, nil)))
+    end
+    after_quoted_call = quote bind_quoted: [mfa: Macro.escape(mfa), result_var: new_var_not_hygienic] do
+      Kernel.apply(Outsider, :on_after, [mfa, result_var])
+    end
+    new_function_body = append_to_function_body(function_body, after_quoted_call, new_var_name)
+
+    # new_function_body = wrap_do_in_try_catch(function_body, {Outsider, :on_success}, {Outsider, :on_error})
 
     new_function = function
     |> put_elem(2, [function_hdr | [[do: new_function_body]]])
 
-    IO.puts("NEW DEF function ####################")
-    IO.inspect(new_function)
+    new_function
   end
 
-  def add_calls({:defp, _metadata, [function_hdr | [[do: function_body]]]} = function) do
+  defp add_calls({:defp, _metadata, [function_hdr | [[do: function_body]]]} = function, _current_module) do
     function
   end
 
-  def add_calls(something_else) do
+  defp add_calls(something_else, _current_module) do
     something_else
   end
 
