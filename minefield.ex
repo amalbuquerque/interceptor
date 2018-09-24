@@ -13,11 +13,11 @@ defmodule Outsider do
   end
 
   def on_success(mfa, result, time_it_took \\ nil) do
-    IO.puts("IT WORKED #{mfa}, took #{time_it_took} light-years. Here's the result #{inspect(result)}")
+    IO.puts("IT WORKED #{inspect(mfa)}, took #{time_it_took} light-years. Here's the result #{inspect(result)}")
   end
 
   def on_error(mfa, error, time_it_took \\ nil) do
-    IO.puts("IT failed miserably #{mfa}, took #{time_it_took} light-years. Here's the error #{inspect(error)}")
+    IO.puts("IT failed miserably #{inspect(mfa)}, took #{time_it_took} light-years. Here's the error #{inspect(error)}")
   end
 end
 
@@ -45,16 +45,16 @@ defmodule Intercept do
     # new_function_body = prepend_to_function_body(function_body, before_quoted_call)
 
     # AFTER CALL
-    new_var_name = :qwertyqwerty
-    new_var_not_hygienic = quote do
-      var!(unquote(Macro.var(new_var_name, nil)))
-    end
-    after_quoted_call = quote bind_quoted: [mfa: Macro.escape(mfa), result_var: new_var_not_hygienic] do
-      Kernel.apply(Outsider, :on_after, [mfa, result_var])
-    end
-    new_function_body = append_to_function_body(function_body, after_quoted_call, new_var_name)
+    # new_var_name = :qwertyqwerty
+    # new_var_not_hygienic = quote do
+    #   var!(unquote(Macro.var(new_var_name, nil)))
+    # end
+    # after_quoted_call = quote bind_quoted: [mfa: Macro.escape(mfa), result_var: new_var_not_hygienic] do
+    #   Kernel.apply(Outsider, :on_after, [mfa, result_var])
+    # end
+    # new_function_body = append_to_function_body(function_body, after_quoted_call, new_var_name)
 
-    # new_function_body = wrap_do_in_try_catch(function_body, {Outsider, :on_success}, {Outsider, :on_error})
+    new_function_body = wrap_do_in_try_catch(function_body, mfa, {Outsider, :on_success}, {Outsider, :on_error})
 
     new_function = function
     |> put_elem(2, [function_hdr | [[do: new_function_body]]])
@@ -70,7 +70,7 @@ defmodule Intercept do
     something_else
   end
 
-  def wrap_do_in_try_catch(function_body, {success_module, success_func}, {error_module, error_func}) do
+  def wrap_do_in_try_catch(function_body, mfa, {success_module, success_func}, {error_module, error_func}) do
     new_var_name = :abcdefghi # TODO: Generate randomly
 
     # TODO: Horrible hack, try to use the suggested way
@@ -83,18 +83,20 @@ defmodule Intercept do
     quoted_success_call = quote bind_quoted: [
       success_module: success_module,
       success_func: success_func,
+      mfa: Macro.escape(mfa),
       result_var: new_var_not_hygienic
     ] do
-      Kernel.apply(success_module, success_func, ["TODO: MFA", result_var])
+      Kernel.apply(success_module, success_func, [mfa, result_var])
     end
     new_function_body = append_to_function_body(function_body, quoted_success_call, new_var_name)
 
+    escaped_mfa = Macro.escape(mfa)
     try_catch_block = quote do
       try do
         unquote(new_function_body)
       rescue
         error ->
-          Kernel.apply(unquote(error_module), unquote(error_func), ["TODO: MFA", error])
+          Kernel.apply(unquote(error_module), unquote(error_func), [unquote(escaped_mfa), error])
           raise(error)
       end
     end
