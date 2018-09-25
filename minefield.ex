@@ -29,6 +29,12 @@ defmodule Outsider do
 
     IO.puts("IT failed miserably #{inspect(mfa)}, took #{time_it_took} light-years. Here's the error #{inspect(error)}")
   end
+
+  def wrapper(mfa, lambda) do
+    result = lambda.()
+    IO.puts("[#{inspect(mfa)}] INSIDE wrapper #{inspect(result)}")
+    result
+  end
 end
 
 defmodule Intercept do
@@ -64,7 +70,11 @@ defmodule Intercept do
     # end
     # new_function_body = append_to_function_body(function_body, after_quoted_call, new_var_name)
 
-    new_function_body = wrap_do_in_try_catch(function_body, mfa, {Outsider, :on_success}, {Outsider, :on_error})
+    # ON SUCCESS ON ERROR CALL
+    # new_function_body = wrap_do_in_try_catch(function_body, mfa, {Outsider, :on_success}, {Outsider, :on_error})
+
+    # WRAPPER CALL
+    new_function_body = wrap_block_in_lambda(function_body, mfa, {Outsider, :wrapper})
 
     new_function = function
     |> put_elem(2, [function_hdr | [[do: new_function_body]]])
@@ -79,6 +89,19 @@ defmodule Intercept do
 
   defp add_calls(something_else, _current_module) do
     something_else
+  end
+
+  def wrap_block_in_lambda(function_body, {_module, _func, _arity} = mfa, {wrapper_module, wrapper_func}) do
+    escaped_mfa = Macro.escape(mfa)
+    lambda_wrapped = quote do
+      fn ->
+        unquote(function_body)
+      end
+    end
+
+    quote do
+      Kernel.apply(unquote(wrapper_module), unquote(wrapper_func), [unquote(escaped_mfa), unquote(lambda_wrapped)])
+    end
   end
 
   def wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
