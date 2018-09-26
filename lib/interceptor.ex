@@ -6,13 +6,23 @@ defmodule Interceptor do
   @doc """
   TODO: Docs for intercept
   """
-  defmacro intercept([do: {_block, _metadata, definitions} = do_block]) do
-    updated_do_block = definitions
-                       |> Enum.map(&(add_calls(&1, __CALLER__.module)))
-                       |> update_block_definitions(do_block)
+  defmacro intercept([do: do_block_body]) do
+    updated_do_block = _intercept(__CALLER__.module, do_block_body)
 
     [do: updated_do_block]
   end
+
+  defp _intercept(caller, {:def, _metadata, function_hdr_body} = function_def) do
+    _intercept(caller, {:__block__, [], [function_def]})
+  end
+
+  defp _intercept(caller, {:__block__, _metadata, definitions} = do_block) do
+    definitions
+    |> Enum.map(&(add_calls(&1, caller)))
+    |> update_block_definitions(do_block)
+  end
+
+  defp _intercept(_caller, something_else), do: something_else
 
   defp get_mfa(current_module, function_header) do
     {function, _context, args} = function_header
@@ -23,10 +33,21 @@ defmodule Interceptor do
     mfa = get_mfa(current_module, function_hdr)
 
     # BEFORE CALL
-    # before_quoted_call = quote bind_quoted: [mfa: Macro.escape(mfa)] do
-    #   Kernel.apply(Outsider, :on_before, [mfa])
-    # end
-    # new_function_body = prepend_to_function_body(function_body, before_quoted_call)
+    interceptor_mfa = get_interceptor_mfa_for(mfa, :on_before)
+
+    function_body = case interceptor_mfa do
+      {interceptor_module, interceptor_function, _interceptor_arity} ->
+        before_quoted_call = quote bind_quoted: [
+          interceptor_module: interceptor_module,
+          interceptor_function: interceptor_function,
+          mfa: Macro.escape(mfa)
+        ] do
+          Kernel.apply(interceptor_module, interceptor_function, [mfa])
+        end
+        prepend_to_function_body(function_body, before_quoted_call)
+
+      _ -> function_body
+    end
 
     # AFTER CALL
     # new_var_name = :qwertyqwerty
@@ -36,16 +57,16 @@ defmodule Interceptor do
     # after_quoted_call = quote bind_quoted: [mfa: Macro.escape(mfa), result_var: new_var_not_hygienic] do
     #   Kernel.apply(Outsider, :on_after, [mfa, result_var])
     # end
-    # new_function_body = append_to_function_body(function_body, after_quoted_call, new_var_name)
+    # function_body = append_to_function_body(function_body, after_quoted_call, new_var_name)
 
     # ON SUCCESS ON ERROR CALL
-    # new_function_body = wrap_do_in_try_catch(function_body, mfa, {Outsider, :on_success}, {Outsider, :on_error})
+    # function_body = wrap_do_in_try_catch(function_body, mfa, {Outsider, :on_success}, {Outsider, :on_error})
 
     # WRAPPER CALL
-    new_function_body = wrap_block_in_lambda(function_body, mfa, {Outsider, :wrapper})
+    # function_body = wrap_block_in_lambda(function_body, mfa, {Outsider, :wrapper})
 
     new_function = function
-    |> put_elem(2, [function_hdr | [[do: new_function_body]]])
+    |> put_elem(2, [function_hdr | [[do: function_body]]])
 
     IO.puts("##################### RESULT")
     IO.inspect(new_function)
@@ -58,6 +79,14 @@ defmodule Interceptor do
   defp add_calls(something_else, _current_module) do
     something_else
   end
+
+  defp get_interceptor_mfa_for({_module, _function, _arity} = to_intercept, interception_type) do
+    interception_configuration = Application.get_env(:interceptor, :configuration)
+    configuration = interception_configuration[to_intercept]
+
+    configuration && Keyword.get(configuration, interception_type)
+  end
+
 
   def wrap_block_in_lambda(function_body, {_module, _func, _arity} = mfa, {wrapper_module, wrapper_func}) do
     escaped_mfa = Macro.escape(mfa)
