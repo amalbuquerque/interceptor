@@ -1,14 +1,14 @@
-defmodule Before.Callback do
-  def on_before({module, function, arity} = mfa) do
-    Agent.update(:on_before_test_process,
+defmodule After.Callback do
+  def on_after({module, function, arity} = mfa, result) do
+    Agent.update(:on_after_test_process,
       fn messages ->
-        [{Interceptor.Utils.timestamp(), mfa} | messages]
+        [{Interceptor.Utils.timestamp(), result, mfa} | messages]
       end)
     "Doesn't influence the function at all"
   end
 end
 
-defmodule InterceptedOnBefore1 do
+defmodule InterceptedOnAfter1 do
   require Interceptor, as: I
 
   I.intercept do
@@ -16,7 +16,7 @@ defmodule InterceptedOnBefore1 do
   end
 end
 
-defmodule InterceptedOnBefore2 do
+defmodule InterceptedOnAfter2 do
   require Interceptor, as: I
 
   I.intercept do
@@ -27,11 +27,11 @@ defmodule InterceptedOnBefore2 do
   end
 end
 
-defmodule InterceptedOnBefore3 do
+defmodule InterceptedOnAfter3 do
   require Interceptor, as: I
 
   I.intercept do
-    def to_intercept(), do: Interceptor.Utils.timestamp()
+    def not_to_intercept(), do: Interceptor.Utils.timestamp()
     def other_to_intercept(w), do: w + private_function(1, 2, 3)
 
     defp private_function(x, y, z), do: x+y+z

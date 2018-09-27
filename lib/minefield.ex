@@ -37,33 +37,33 @@ defmodule Outsider do
   end
 end
 
-# defmodule Foo do
-#   require Interceptor, as: I
+defmodule Foo do
+  require Interceptor, as: I
 
-#   I.intercept do
-#     def abc(x) do
-#       IO.puts("Hey abc #{x}")
-#       IO.puts("second entry")
-#       ccc = 33
-#       |> Kernel.+(2)
-#       |> Kernel.-(12)
-#       ccc
-#     end
+  I.intercept do
+    def abc(x) do
+      IO.puts("Hey abc #{x}")
+      IO.puts("second entry")
+      ccc = 33
+      |> Kernel.+(2)
+      |> Kernel.-(12)
+      ccc
+    end
 
-#     def err(x) do
-#       IO.puts("inside err #{x}")
-#       4+5
-#       33/0
-#       9+8
-#     end
+    def err(x) do
+      IO.puts("inside err #{x}")
+      4+5
+      33/0
+      9+8
+    end
 
-#     def yyy(), do: IO.puts("alo from yyy")
-#     def zzz(), do: lalalu("From ZZZ")
+    def yyy(), do: IO.puts("alo from yyy")
+    def zzz(), do: lalalu("From ZZZ")
 
-#     defp lalalu(foo), do: "#{foo} Fa #{foo}"
-#   end
+    defp lalalu(foo), do: "#{foo} Fa #{foo}"
+  end
 
-#   def xyz(x) do
-#     IO.puts("Hey xyz #{x}")
-#   end
-# end
+  def xyz(x) do
+    IO.puts("Hey xyz #{x}")
+  end
+end

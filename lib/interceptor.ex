@@ -32,18 +32,9 @@ defmodule Interceptor do
   defp add_calls({:def, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) do
     mfa = get_mfa(current_module, function_hdr)
 
-    # BEFORE CALL
-    function_body = set_on_before_callback(function_body, mfa)
-
-    # AFTER CALL
-    # new_var_name = :qwertyqwerty
-    # new_var_not_hygienic = quote do
-    #   var!(unquote(Macro.var(new_var_name, nil)))
-    # end
-    # after_quoted_call = quote bind_quoted: [mfa: Macro.escape(mfa), result_var: new_var_not_hygienic] do
-    #   Kernel.apply(Outsider, :on_after, [mfa, result_var])
-    # end
-    # function_body = append_to_function_body(function_body, after_quoted_call, new_var_name)
+    function_body = function_body
+    |> set_on_before_callback(mfa)
+    |> set_on_after_callback(mfa)
 
     # ON SUCCESS ON ERROR CALL
     # function_body = wrap_do_in_try_catch(function_body, mfa, {Outsider, :on_success}, {Outsider, :on_error})
@@ -64,6 +55,37 @@ defmodule Interceptor do
 
   defp add_calls(something_else, _current_module) do
     something_else
+  end
+
+  defp set_on_after_callback(function_body, mfa) do
+    interceptor_mfa = get_interceptor_mfa_for(mfa, :on_after)
+
+    set_on_after_callback_in_place(
+        function_body, mfa, interceptor_mfa)
+  end
+
+  defp set_on_after_callback_in_place(
+    function_body, mfa, nil = _interceptor_mfa), do: function_body
+
+  defp set_on_after_callback_in_place(
+    function_body, mfa,
+    {interceptor_module, interceptor_function, _interceptor_arity}) do
+
+    new_var_name = :qwertyqwerty
+    new_var_not_hygienic = quote do
+      var!(unquote(Macro.var(new_var_name, nil)))
+    end
+
+    after_quoted_call = quote bind_quoted: [
+      interceptor_module: interceptor_module,
+      interceptor_function: interceptor_function,
+      mfa: Macro.escape(mfa),
+      result_var: new_var_not_hygienic
+    ] do
+      Kernel.apply(interceptor_module, interceptor_function, [mfa, result_var])
+    end
+
+    append_to_function_body(function_body, after_quoted_call, new_var_name)
   end
 
   defp set_on_before_callback(function_body, mfa) do
