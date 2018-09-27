@@ -33,7 +33,7 @@ defmodule Interceptor do
     mfa = get_mfa(current_module, function_hdr)
 
     # BEFORE CALL
-    function_body = set_on_before_callback_in_place(function_body, mfa)
+    function_body = set_on_before_callback(function_body, mfa)
 
     # AFTER CALL
     # new_var_name = :qwertyqwerty
@@ -66,22 +66,29 @@ defmodule Interceptor do
     something_else
   end
 
-  defp set_on_before_callback_in_place(function_body, mfa) do
+  defp set_on_before_callback(function_body, mfa) do
     interceptor_mfa = get_interceptor_mfa_for(mfa, :on_before)
 
-    case interceptor_mfa do
-      {interceptor_module, interceptor_function, _interceptor_arity} ->
-        before_quoted_call = quote bind_quoted: [
-          interceptor_module: interceptor_module,
-          interceptor_function: interceptor_function,
-          mfa: Macro.escape(mfa)
-        ] do
-          Kernel.apply(interceptor_module, interceptor_function, [mfa])
-        end
-        prepend_to_function_body(function_body, before_quoted_call)
+    set_on_before_callback_in_place(
+        function_body, mfa, interceptor_mfa)
+  end
 
-      _ -> function_body
+  defp set_on_before_callback_in_place(
+    function_body, mfa, nil = _interceptor_mfa), do: function_body
+
+  defp set_on_before_callback_in_place(
+    function_body, mfa,
+    {interceptor_module, interceptor_function, _interceptor_arity}) do
+
+    before_quoted_call = quote bind_quoted: [
+      interceptor_module: interceptor_module,
+      interceptor_function: interceptor_function,
+      mfa: Macro.escape(mfa)
+    ] do
+      Kernel.apply(interceptor_module, interceptor_function, [mfa])
     end
+
+    prepend_to_function_body(function_body, before_quoted_call)
   end
 
   defp get_interceptor_mfa_for({_module, _function, _arity} = to_intercept, interception_type) do
