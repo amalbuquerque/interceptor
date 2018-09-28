@@ -24,4 +24,11 @@ config :interceptor, configuration: %{
   {InterceptedOnError2, :to_intercept, 0} => [on_error: {OnError.Callback, :on_error}],
   {InterceptedOnError2, :other_to_intercept, 0} => [on_error: {OnError.Callback, :on_error}],
   {InterceptedOnError3, :other_to_intercept, 1} => [on_error: {OnError.Callback, :on_error}],
+
+  # wrapper tests
+  {InterceptedByWrapper1, :to_intercept, 0} => [wrapper: {Wrapper.Callback, :wrap_returns_result}],
+  {InterceptedByWrapper2, :to_intercept, 0} => [wrapper: {Wrapper.Callback, :wrap_returns_result}],
+  {InterceptedByWrapper2, :other_to_intercept, 0} => [wrapper: {Wrapper.Callback, :wrap_returns_result}],
+  {InterceptedByWrapper3, :other_to_intercept, 1} => [wrapper: {Wrapper.Callback, :wrap_returns_result}],
+  {InterceptedByWrapper4, :to_intercept, 0} => [wrapper: {Wrapper.Callback, :wrap_returns_hello}],
 }

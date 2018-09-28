@@ -74,8 +74,8 @@ defmodule Interceptor do
   defp set_lambda_wrapper_in_place(function_body, mfa, _wrapper_function, false),
     do: raise "Wrapper needs to be the only callback configured. You configured another callback besides `wrapper` for the following function: #{inspect(mfa)}."
 
-  defp set_lambda_wrapper_in_place(function_body, mfa, {wrapper_module, wrapper_function}, true),
-    do: wrap_block_in_lambda(function_body, mfa, {Outsider, :wrapper})
+  defp set_lambda_wrapper_in_place(function_body, mfa, wrapper_function, true),
+    do: wrap_block_in_lambda(function_body, mfa, wrapper_function)
 
   defp set_on_success_error_callback(function_body, mfa) do
     success_callback = get_interceptor_module_function_for(mfa, :on_success)
