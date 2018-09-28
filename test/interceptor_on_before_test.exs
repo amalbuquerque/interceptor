@@ -69,7 +69,7 @@ defmodule InterceptorOnBeforeTest do
 
       now = Interceptor.Utils.timestamp()
       Process.sleep(50)
-      result = InterceptedOnBefore3.to_intercept()
+      result = InterceptedOnBefore3.not_to_intercept()
 
       callback_calls = get_agent_messages()
 

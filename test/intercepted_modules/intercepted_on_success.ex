@@ -1,14 +1,14 @@
-defmodule Before.Callback do
-  def on_before({module, function, arity} = mfa) do
-    Agent.update(:on_before_test_process,
+defmodule OnSuccess.Callback do
+  def on_success({module, function, arity} = mfa, result, started_at) do
+    Agent.update(:on_success_test_process,
       fn messages ->
-        [{Interceptor.Utils.timestamp(), mfa} | messages]
+        [{started_at, Interceptor.Utils.timestamp(), result, mfa} | messages]
       end)
     "Doesn't influence the function at all"
   end
 end
 
-defmodule InterceptedOnBefore1 do
+defmodule InterceptedOnSuccess1 do
   require Interceptor, as: I
 
   I.intercept do
@@ -16,22 +16,24 @@ defmodule InterceptedOnBefore1 do
   end
 end
 
-defmodule InterceptedOnBefore2 do
+defmodule InterceptedOnSuccess2 do
   require Interceptor, as: I
 
   I.intercept do
-    def to_intercept(), do: Interceptor.Utils.timestamp()
+    def to_intercept(), do: Process.sleep(200)
     def other_to_intercept(), do: "HELLO"
 
     IO.puts("This statement doesn't interfere in any way")
   end
 end
 
-defmodule InterceptedOnBefore3 do
+defmodule InterceptedOnSuccess3 do
   require Interceptor, as: I
 
+  def definitely_not_to_intercept(), do: "No macros plz"
+
   I.intercept do
-    def not_to_intercept(), do: Interceptor.Utils.timestamp()
+    def not_to_intercept(), do: "Not intercepted"
     def other_to_intercept(w), do: w + private_function(1, 2, 3)
 
     defp private_function(x, y, z), do: x+y+z
