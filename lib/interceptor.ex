@@ -77,18 +77,18 @@ defmodule Interceptor do
     do: wrap_do_in_try_catch(function_body, mfa, success_callback, error_callback)
 
   defp set_on_after_callback(function_body, mfa) do
-    interceptor_mfa = get_interceptor_module_function_for(mfa, :on_after)
+    interceptor_callback = get_interceptor_module_function_for(mfa, :on_after)
 
     set_on_after_callback_in_place(
-        function_body, mfa, interceptor_mfa)
+        function_body, mfa, interceptor_callback)
   end
 
   defp set_on_after_callback_in_place(
-    function_body, mfa, nil = _interceptor_mfa), do: function_body
+    function_body, mfa, nil = _interceptor_callback), do: function_body
 
   defp set_on_after_callback_in_place(
     function_body, mfa,
-    {interceptor_module, interceptor_function, _interceptor_arity}) do
+    {interceptor_module, interceptor_function}) do
 
     new_var_name = :qwertyqwerty
     new_var_not_hygienic = quote do
@@ -108,18 +108,18 @@ defmodule Interceptor do
   end
 
   defp set_on_before_callback(function_body, mfa) do
-    interceptor_mfa = get_interceptor_module_function_for(mfa, :on_before)
+    interceptor_callback = get_interceptor_module_function_for(mfa, :on_before)
 
     set_on_before_callback_in_place(
-        function_body, mfa, interceptor_mfa)
+        function_body, mfa, interceptor_callback)
   end
 
   defp set_on_before_callback_in_place(
-    function_body, mfa, nil = _interceptor_mfa), do: function_body
+    function_body, mfa, nil = _interceptor_callback), do: function_body
 
   defp set_on_before_callback_in_place(
     function_body, mfa,
-    {interceptor_module, interceptor_function, _interceptor_arity}) do
+    {interceptor_module, interceptor_function}) do
 
     before_quoted_call = quote bind_quoted: [
       interceptor_module: interceptor_module,
