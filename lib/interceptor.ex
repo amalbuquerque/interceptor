@@ -39,9 +39,7 @@ defmodule Interceptor do
     |> set_on_before_callback(mfa)
     |> set_on_after_callback(mfa)
     |> set_on_success_error_callback(mfa)
-
-    # WRAPPER CALL
-    # function_body = wrap_block_in_lambda(function_body, mfa, {Outsider, :wrapper})
+    |> set_lambda_wrapper(mfa)
 
     new_function = function
     |> put_elem(2, [function_hdr | [[do: function_body]]])
@@ -57,6 +55,27 @@ defmodule Interceptor do
   defp add_calls(something_else, _current_module) do
     something_else
   end
+
+  defp set_lambda_wrapper(function_body, mfa) do
+    wrapper_function = get_interceptor_module_function_for(mfa, :wrapper)
+
+    wrapper_only_callback? = [
+      :on_before,
+      :on_after,
+      :on_success,
+      :on_failure
+    ] |> Enum.all?(&is_nil(get_interceptor_module_function_for(mfa, &1)))
+
+    set_lambda_wrapper_in_place(function_body, mfa, wrapper_function, wrapper_only_callback?)
+  end
+
+  defp set_lambda_wrapper_in_place(function_body, _mfa, nil, _wrapper_only_callback?), do: function_body
+
+  defp set_lambda_wrapper_in_place(function_body, mfa, _wrapper_function, false),
+    do: raise "Wrapper needs to be the only callback configured. You configured another callback besides `wrapper` for the following function: #{inspect(mfa)}."
+
+  defp set_lambda_wrapper_in_place(function_body, mfa, {wrapper_module, wrapper_function}, true),
+    do: wrap_block_in_lambda(function_body, mfa, {Outsider, :wrapper})
 
   defp set_on_success_error_callback(function_body, mfa) do
     success_callback = get_interceptor_module_function_for(mfa, :on_success)
