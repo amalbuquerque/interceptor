@@ -1,5 +1,5 @@
 defmodule Wrapper.Callback do
-  def wrap_returns_result({module, function, arity} = mfa, lambda) do
+  def wrap_returns_result({_module, _function, _arity} = mfa, lambda) do
     result = lambda.()
 
     Agent.update(:wrapper_test_process,
@@ -10,7 +10,7 @@ defmodule Wrapper.Callback do
     result
   end
 
-  def wrap_returns_hello({module, function, arity} = mfa, lambda) do
+  def wrap_returns_hello({_module, _function, _arity} = mfa, lambda) do
     result = lambda.()
 
     Agent.update(:wrapper_test_process,

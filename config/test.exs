@@ -1,6 +1,7 @@
 use Mix.Config
 
 config :interceptor, configuration: %{
+  :debug => true,
   # on before tests
   {InterceptedOnBefore1, :to_intercept, 0} => [on_before: {Before.Callback, :on_before}],
   {InterceptedOnBefore2, :to_intercept, 0} => [on_before: {Before.Callback, :on_before}],

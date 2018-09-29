@@ -1,5 +1,5 @@
 defmodule After.Callback do
-  def on_after({module, function, arity} = mfa, result) do
+  def on_after({_module, _function, _arity} = mfa, result) do
     Agent.update(:on_after_test_process,
       fn messages ->
         [{Interceptor.Utils.timestamp(), result, mfa} | messages]

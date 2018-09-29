@@ -15,7 +15,7 @@ defmodule Interceptor do
     [do: updated_do_block]
   end
 
-  defp _intercept(caller, {:def, _metadata, function_hdr_body} = function_def) do
+  defp _intercept(caller, {:def, _metadata, _function_hdr_body} = function_def) do
     _intercept(caller, {:__block__, [], [function_def]})
   end
 
@@ -41,19 +41,28 @@ defmodule Interceptor do
     |> set_on_success_error_callback(mfa)
     |> set_lambda_wrapper(mfa)
 
-    new_function = function
+    function
     |> put_elem(2, [function_hdr | [[do: function_body]]])
-
-    IO.puts("##################### RESULT")
-    IO.inspect(new_function)
+    |> return_function_body()
   end
 
-  defp add_calls({:defp, _metadata, [function_hdr | [[do: function_body]]]} = function, _current_module) do
+  defp add_calls({:defp, _metadata, [_function_hdr | [[do: _function_body]]]} = function, _current_module) do
     function
   end
 
   defp add_calls(something_else, _current_module) do
     something_else
+  end
+
+  defp return_function_body(function_body) do
+    config = Application.get_env(:interceptor, :configuration)
+
+    case config && Map.get(config, :debug) do
+      true ->
+        IO.puts("############# Function AST after interceptor ###")
+        IO.inspect(function_body)
+      _ -> function_body
+    end
   end
 
   defp set_lambda_wrapper(function_body, mfa) do
@@ -71,7 +80,7 @@ defmodule Interceptor do
 
   defp set_lambda_wrapper_in_place(function_body, _mfa, nil, _wrapper_only_callback?), do: function_body
 
-  defp set_lambda_wrapper_in_place(function_body, mfa, _wrapper_function, false),
+  defp set_lambda_wrapper_in_place(_function_body, mfa, _wrapper_function, false),
     do: raise "Wrapper needs to be the only callback configured. You configured another callback besides `wrapper` for the following function: #{inspect(mfa)}."
 
   defp set_lambda_wrapper_in_place(function_body, mfa, wrapper_function, true),
@@ -103,7 +112,7 @@ defmodule Interceptor do
   end
 
   defp set_on_after_callback_in_place(
-    function_body, mfa, nil = _interceptor_callback), do: function_body
+    function_body, _mfa, nil = _interceptor_callback), do: function_body
 
   defp set_on_after_callback_in_place(
     function_body, mfa,
@@ -134,7 +143,7 @@ defmodule Interceptor do
   end
 
   defp set_on_before_callback_in_place(
-    function_body, mfa, nil = _interceptor_callback), do: function_body
+    function_body, _mfa, nil = _interceptor_callback), do: function_body
 
   defp set_on_before_callback_in_place(
     function_body, mfa,
@@ -203,7 +212,7 @@ defmodule Interceptor do
     new_function_body = append_to_function_body(function_body, quoted_success_call, result_var_name)
 
     escaped_mfa = Macro.escape(mfa)
-    try_catch_block = quote do
+    quote do
       unquote(time_var_not_hygienic) = :os.system_time(:microsecond)
       try do
         unquote(new_function_body)
@@ -224,8 +233,7 @@ defmodule Interceptor do
     {:__block__, [], [quoted_call, single_statement]}
   end
 
-  defp append_to_function_body(body, quoted_call, new_var_name \\ nil)
-  defp append_to_function_body({:__block__, _metadata, statements} = body, quoted_call, new_var_name) do
+  defp append_to_function_body({:__block__, _metadata, statements}, quoted_call, new_var_name) do
     last_statement = Enum.at(statements, -1)
 
     {_result_var, new_last_statements} = return_statement_result_after_quoted_call(last_statement, quoted_call, new_var_name)
@@ -241,7 +249,7 @@ defmodule Interceptor do
     {:__block__, [], new_last_statements}
   end
 
-  defp return_statement_result_after_quoted_call(statement, quoted_call, new_var_name \\ nil) do
+  defp return_statement_result_after_quoted_call(statement, quoted_call, new_var_name) do
     new_result_var = case new_var_name do
       nil -> :qwerty # TODO: Randomly generate this
       _ -> new_var_name
