@@ -55,7 +55,7 @@ defmodule Interceptor do
   end
 
   defp return_function_body(function_body) do
-    config = Application.get_env(:interceptor, :configuration)
+    config = get_configuration()
 
     case config && Map.get(config, :debug) do
       true ->
@@ -161,14 +161,35 @@ defmodule Interceptor do
   end
 
   defp get_interceptor_module_function_for({_module, _function, _arity} = to_intercept, interception_type) do
-    interception_configuration = Application.get_env(:interceptor, :configuration)
+    interception_configuration = get_configuration()
     configuration = interception_configuration[to_intercept]
 
     configuration && Keyword.get(configuration, interception_type)
   end
 
+  defp get_configuration() do
+    Application.get_env(:interceptor, :configuration)
+    |> config_module_exists?()
+    |> get_configuration_from_module()
+  end
 
-  def wrap_block_in_lambda(function_body, {_module, _func, _arity} = mfa, {wrapper_module, wrapper_func}) do
+  defp get_configuration_from_module({false, nil}),
+    do: %{}
+
+  defp get_configuration_from_module({false, module}),
+    do: raise "Your interceptor configuration is pointing to #{inspect(module)}, an invalid (non-existent?) module. Please check your configuration and try again. The module needs to exist and expose the get/0 function."
+
+  defp get_configuration_from_module({true, module}), do: module.get()
+
+  defp config_module_exists?(module) do
+    exists? = [__info__: 1, get: 0]
+    |> Enum.map(fn {name, arity} -> function_exported?(module, name, arity) end)
+    |> Enum.all?(&(&1))
+
+    {exists?, module}
+  end
+
+  defp wrap_block_in_lambda(function_body, {_module, _func, _arity} = mfa, {wrapper_module, wrapper_func}) do
     escaped_mfa = Macro.escape(mfa)
     lambda_wrapped = quote do
       fn ->
@@ -181,7 +202,7 @@ defmodule Interceptor do
     end
   end
 
-  def wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
+  defp wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
     start_time_var_name = :blhargblharg # TODO: Generate randomly
     # start_time_assignment = quote do
     #   var!(unquote(Macro.var(start_time_var_name, module))) = :os.system_time(:microsecond)
