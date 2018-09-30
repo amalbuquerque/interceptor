@@ -1,14 +1,168 @@
 defmodule Interceptor do
   @moduledoc """
-  Documentation for Interceptor.
+  The Interceptor library allows you to intercept function calls, by configuring
+  the interception functions and using the `Interceptor.intercept/1` macro.
+
+  Create a module with a `get/0` function that returns the interception
+  configuration map.
+
+  ```
+  defmodule Interception.Config do
+    def get, do: %{
+      {Intercepted, :abc, 1} => [
+        on_before: {MyInterceptor, :intercept_before, 1},
+        on_after: {MyInterceptor, :intercept_after, 2}
+      ]
+    }
+  end
+  ```
+
+  Point to the previous configuration module in your configuration:
+
+  ```
+  # [...]
+  config :interceptor,
+      configuration: Interception.Config
+  ```
+
+  Define your interceptor module:
+
+  ```
+  defmodule MyInterceptor do
+    def intercept_before(mfa), do: IO.puts "Intercepted \#\{inspect(mfa)\} before it started."
+
+    def intercept_after(mfa, result), do: IO.puts "Intercepted \#\{inspect(mfa)\} after it completed. Its result: \#\{inspect(result)\}"
+  end
+  ```
+
+  In the module that you want to intercept (in our case, `Intercepted`), place
+  the functions that you want to intercept inside a `Interceptor.intercept/1`
+  block. If your functions are placed out of this block or if they don't have a
+  corresponding interceptor configuration, they won't intercepted. E.g.:
+
+  ```
+  defmodule Intercepted do
+    require Interceptor, as: I
+
+    I.intercept do
+      def abc(x), do: "Got \#\{inspect(x)\}"
+    end
+  end
+  ```
+
+  Now when you run your code, whenever the `Intercepted.abc/1` function is
+  called, it will be intercepted *before* it starts and *after* it completes.
+
+  In the previous example, we're defining two callbacks: one `on_before`, that
+  will be called before the intercepted function starts, and one `on_after` that
+  will be called after the intercepted function completes.
+
+  Besides these two callbacks, you can also define `on_success` and `on_error`
+  callbacks, that will be called when your function completes successfully or
+  raises any error.
+
+  If none of the previous callbacks suits your needs, you can use the `wrapper`
+  callback. This way, the intercepted function will be wrapped in a lambda and
+  passed to your callback function.
+
+  _Note:_ It's the responsibility of the callback function to invoke the lambda
+  and return the result.
+
+  ## Possible callbacks
+
+  * `on_before` - The callback function that you use to intercept your function
+  will be passed the MFA (`{intercepted_module, intercepted_function,
+  intercepted_args}`) of the intercepted function, hence it needs to receive
+  *one* argument. E.g.:
+
+  ```
+  defmodule BeforeInterceptor do
+    def called_before_your_function({module, function, args}) do
+      ...
+    end
+  end
+  ```
+
+  * `on_after` - The callback function that you use to intercept your function
+  will be passed the MFA (`{intercepted_module, intercepted_function,
+  intercepted_args}`) of the intercepted function and its result, hence it needs
+  to receive *two* arguments. E.g.:
+
+  ```
+  defmodule AfterInterceptor do
+    def called_after_your_function({module, function, args}, result) do
+      ...
+    end
+  end
+  ```
+
+  * `on_success` - The callback function that you use to intercept your function
+  on success will be passed the MFA (`{intercepted_module, intercepted_function,
+  intercepted_args}`) of the intercepted function, its success result and the
+  start timestamp (in microseconds, obtained with
+  `:os.system_time(:microsecond)`), hence it needs to receive *three* arguments.
+  E.g.:
+
+  ```
+  defmodule SuccessInterceptor do
+  def called_when_your_function_completes_successfully(
+    {module, function, args}, result, start_timestamp) do
+      ...
+    end
+  end
+  ```
+
+  * `on_error` - The callback function that you use to intercept your function
+  on error will be passed the MFA (`{intercepted_module, intercepted_function,
+  intercepted_args}`) of the intercepted function, the raised error and the
+  start timestamp (in microseconds, obtained with
+  `:os.system_time(:microsecond)`), hence it needs to receive *three* arguments.
+  E.g.:
+
+  ```
+  defmodule ErrorInterceptor do
+  def called_when_your_function_raises_an_erro(
+    {module, function, args}, error, start_timestamp) do
+      ...
+    end
+  end
+  ```
+
+  * `wrapper` - The callback function that you use to intercept your function
+  will be passed the MFA (`{intercepted_module, intercepted_function,
+  intercepted_args}`) of the intercepted function and its body wrapped in a
+  lambda, hence it needs to receive *two* argument. E.g.:
+
+  ```
+  defmodule WrapperInterceptor do
+    def called_instead_of_your_function({module, function, args}, intercepted_function_lambda) do
+      result = intercepted_function_lambda.()
+
+      result
+    end
+  end
+  ```
   """
 
-  def on_success_default_callback(_mfa, _result, _started_at), do: :noop
-  def on_error_default_callback(_mfa, _error, _started_at), do: :noop
 
   @doc """
-  TODO: Docs for intercept
+  Use this macro to wrap all the function definitions of your modules that you
+  want to intercept. Remember that you need to configure how the interception
+  will work. More information on the `Interceptor` module docs. E.g.:
+
+  ```
+  defmodule ModuleToBeIntercepted do
+    require Interceptor, as: I
+
+    I.intercept do
+      def foo(x), do: "Got \#\{inspect(x)\}"
+      def bar, do: "Hi"
+      def baz(a, b, c, d), do: a + b + c + d
+    end
+  end
+  ```
   """
+
   defmacro intercept([do: do_block_body]) do
     updated_do_block = _intercept(__CALLER__.module, do_block_body)
 
@@ -204,12 +358,8 @@ defmodule Interceptor do
 
   defp wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
     start_time_var_name = :blhargblharg # TODO: Generate randomly
-    # start_time_assignment = quote do
-    #   var!(unquote(Macro.var(start_time_var_name, module))) = :os.system_time(:microsecond)
-    # end
-    # function_body = prepend_to_function_body(function_body, start_time_assignment)
-
     result_var_name = :abcdefghi # TODO: Generate randomly
+
     # TODO: Horrible hack, try to use the suggested way
     # by Valim https://groups.google.com/forum/#!topic/elixir-lang-talk/maki_LbLLVI
     new_var_not_hygienic = quote do
@@ -296,4 +446,7 @@ defmodule Interceptor do
     do_block
     |> put_elem(2, new_definitions)
   end
+
+  defp on_success_default_callback(_mfa, _result, _started_at), do: :noop
+  defp on_error_default_callback(_mfa, _error, _started_at), do: :noop
 end
