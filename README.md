@@ -54,7 +54,7 @@ end
 In the module that you want to intercept (in our case, `Intercepted`), place
 the functions that you want to intercept inside a `Interceptor.intercept/1`
 block. If your functions are placed out of this block or if they don't have a
-corresponding interceptor configuration, they won't intercepted. E.g.:
+corresponding interceptor configuration, they won't be intercepted. In the next snippet, the `Intercepted.foo/0` function won't be intercepted because it's out of the `Interceptor.intercept/1` do-block.
 
 ```elixir
 defmodule Intercepted do
@@ -63,11 +63,13 @@ require Interceptor, as: I
 I.intercept do
   def abc(x), do: "Got #{inspect(x)}"
 end
+
+  def foo, do: "Hi there"
 end
 ```
 
 Now when you run your code, whenever the `Intercepted.abc/1` function is
-called, it will be intercepted *before* it starts and *after* it completes.
+called, it will be intercepted *before* it starts and *after* it completes. You also have a `on_success`, `on_error` and `wrapper` callbacks. Check the full documentation for further examples.
 
 ## More info
 
