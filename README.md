@@ -1,11 +1,13 @@
-# Interceptor
+![Interceptor](https://github.com/amalbuquerque/interceptor/raw/master/assets/images/interceptor_logo_with_title.png)
+=========
 
-Library to easily intercept Elixir function calls.
+The Interceptor library allows you to intercept function calls, by configuring
+the interception functions and using the `Interceptor.intercept/1` macro.
 
 ## Installation
 
-If [available in Hex](https://hex.pm/docs/publish), the package can be installed
-by adding `interceptor` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `interceptor` to your list of
+dependencies in `mix.exs`:
 
 ```elixir
 def deps do
@@ -15,7 +17,59 @@ def deps do
 end
 ```
 
-Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_doc)
-and published on [HexDocs](https://hexdocs.pm). Once published, the docs can
-be found at [https://hexdocs.pm/interceptor](https://hexdocs.pm/interceptor).
+## Getting started
+
+Create a module with a `get/0` function that returns the interception
+configuration map.
+
+```elixir
+defmodule Interception.Config do
+def get, do: %{
+  {Intercepted, :abc, 1} => [
+    before: {MyInterceptor, :intercept_before, 1},
+    after: {MyInterceptor, :intercept_after, 2}
+  ]
+}
+end
+```
+
+Point to the previous configuration module in your configuration:
+
+```elixir
+# [...]
+config :interceptor,
+  configuration: Interception.Config
+```
+
+Define your interceptor module:
+
+```elixir
+defmodule MyInterceptor do
+def intercept_before(mfa), do: IO.puts "Intercepted #{inspect(mfa)} before it started."
+
+def intercept_after(mfa, result), do: IO.puts "Intercepted #{inspect(mfa)} after it completed. Its result: #{inspect(result)}"
+end
+```
+
+In the module that you want to intercept (in our case, `Intercepted`), place
+the functions that you want to intercept inside a `Interceptor.intercept/1`
+block. If your functions are placed out of this block or if they don't have a
+corresponding interceptor configuration, they won't intercepted. E.g.:
+
+```elixir
+defmodule Intercepted do
+require Interceptor, as: I
+
+I.intercept do
+  def abc(x), do: "Got #{inspect(x)}"
+end
+end
+```
+
+Now when you run your code, whenever the `Intercepted.abc/1` function is
+called, it will be intercepted *before* it starts and *after* it completes.
+
+## More info
+
+You can find the library documentation at [https://hexdocs.pm/interceptor](https://hexdocs.pm/interceptor).
 
