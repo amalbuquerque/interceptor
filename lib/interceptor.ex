@@ -12,6 +12,9 @@ defmodule Interceptor do
       {Intercepted, :abc, 1} => [
         before: {MyInterceptor, :intercept_before, 1},
         after: {MyInterceptor, :intercept_after, 2}
+        on_success: {MyInterceptor, :intercept_on_success, 3},
+        on_error: {MyInterceptor, :intercept_on_error, 3},
+        # there's also a `wrapper` callback available!
       ]
     }
   end
@@ -29,9 +32,17 @@ defmodule Interceptor do
 
   ```
   defmodule MyInterceptor do
-    def intercept_before(mfa), do: IO.puts "Intercepted \#\{inspect(mfa)\} before it started."
+    def intercept_before(mfa),
+      do: IO.puts "Intercepted \#\{inspect(mfa)\} before it started."
 
-    def intercept_after(mfa, result), do: IO.puts "Intercepted \#\{inspect(mfa)\} after it completed. Its result: \#\{inspect(result)\}"
+    def intercept_after(mfa, result),
+      do: IO.puts "Intercepted \#\{inspect(mfa)\} after it completed. Its result: \#\{inspect(result)\}"
+
+    def intercept_on_success(mfa, result, _start_timestamp),
+      do: IO.puts "Intercepted \#\{inspect(mfa)\} after it completed successfully. Its result: \#\{inspect(result)\}"
+
+    def intercept_on_error(mfa, error, _start_timestamp),
+      do: IO.puts "Intercepted \#\{inspect(mfa)\} after it raised an error. Here's the error: \#\{inspect(error)\}"
   end
   ```
 
@@ -53,20 +64,26 @@ defmodule Interceptor do
   Now when you run your code, whenever the `Intercepted.abc/1` function is
   called, it will be intercepted *before* it starts and *after* it completes.
 
-  In the previous example, we're defining two callbacks: one `before`, that
-  will be called before the intercepted function starts, and one `after` that
-  will be called after the intercepted function completes.
-
-  Besides these two callbacks, you can also define `on_success` and `on_error`
-  callbacks, that will be called when your function completes successfully or
-  raises any error.
+  In the previous example, we're defining four callbacks: one `before`, that
+  will be called before the intercepted function starts and one `after` that
+  will be called after the intercepted function completes. We also define the
+  `on_success` and `on_error` callbacks, that will be called when the
+  `Intercepted.abc/1` function completes successfully or raises any error,
+  respectively.
 
   If none of the previous callbacks suits your needs, you can use the `wrapper`
   callback. This way, the intercepted function will be wrapped in a lambda and
   passed to your callback function.
 
-  _Note:_ It's the responsibility of the callback function to invoke the lambda
-  and return the result.
+  _Note:_ When you use a `wrapper` callback, you can't use any other callback,
+  i.e., the `before`, `after`, `on_success` and `on_error` callbacks can't be
+  used for a function that is already being intercepted by a `wrapper` callback.
+  If you try so, you'll an exception in compile-time will be raised.
+
+  _Note 2:_ When you use the `wrapper` callback, it's the responsibility of the
+  callback function to invoke the lambda and return the result. If you don't
+  return the result from your callback, the intercepted function return value
+  will be whatever value your `wrapper` callback function returns.
 
   ## Possible callbacks
 
