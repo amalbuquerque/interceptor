@@ -122,8 +122,8 @@ defmodule Interceptor do
 
   ```
   defmodule SuccessInterceptor do
-  def called_when_your_function_completes_successfully(
-    {module, function, args}, result, start_timestamp) do
+    def called_when_your_function_completes_successfully(
+      {module, function, args}, result, start_timestamp) do
       ...
     end
   end
@@ -138,8 +138,8 @@ defmodule Interceptor do
 
   ```
   defmodule ErrorInterceptor do
-  def called_when_your_function_raises_an_erro(
-    {module, function, args}, error, start_timestamp) do
+    def called_when_your_function_raises_an_error(
+      {module, function, args}, error, start_timestamp) do
       ...
     end
   end
@@ -466,6 +466,16 @@ defmodule Interceptor do
     |> put_elem(2, new_definitions)
   end
 
+
+  @doc """
+  This function will be called as the success callback, in those cases when you
+  only define an error callback for your intercepted function.
+  """
   def on_success_default_callback(_mfa, _result, _started_at), do: :noop
+
+  @doc """
+  This function will be called as the error callback, in those cases when you
+  only define a success callback for your intercepted function.
+  """
   def on_error_default_callback(_mfa, _error, _started_at), do: :noop
 end
