@@ -11,10 +11,7 @@ defmodule Interceptor.MixProject do
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      docs: [main: "Interceptor",
-        logo: "assets/images/interceptor_logo_small.png",
-        assets: "assets"
-      ]
+      docs: docs()
     ]
   end
 
@@ -33,11 +30,20 @@ defmodule Interceptor.MixProject do
   defp elixirc_paths(:test), do: ["lib", "test/intercepted_modules"]
   defp elixirc_paths(_), do: ["lib"]
 
+  defp docs() do
+    [
+      main: "Interceptor",
+      canonical: "https://hexdocs.pm/interceptor",
+      source_url: "https://github.com/amalbuquerque/interceptor",
+      logo: "assets/images/interceptor_logo_small.png",
+      assets: "assets"
+    ]
+  end
   defp package() do
     [
       description: "Library to easily intercept function calls",
       licenses: ["MIT"],
-      maintainers: ["andre.malbuq@gmail.com"],
+      maintainers: ["André Albuquerque"],
       links: %{
         Github: "https://github.com/amalbuquerque/interceptor"
       },

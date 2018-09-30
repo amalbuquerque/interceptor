@@ -148,7 +148,9 @@ defmodule Interceptor do
   @doc """
   Use this macro to wrap all the function definitions of your modules that you
   want to intercept. Remember that you need to configure how the interception
-  will work. More information on the `Interceptor` module docs. E.g.:
+  will work. More information on the `Interceptor` module docs.
+
+  Here's an example of a module that we want to intercept, using the `Interceptor.intercept/1` macro:
 
   ```
   defmodule ModuleToBeIntercepted do
