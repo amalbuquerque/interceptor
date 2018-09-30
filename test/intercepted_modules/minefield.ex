@@ -1,12 +1,12 @@
 defmodule Outsider do
   # used when we want to intercept *before* the function starts
-  def on_before({_module, _function, _arity} = mfa) do
+  def before({_module, _function, _arity} = mfa) do
     IO.puts("BEFORE #{inspect(mfa)}")
     42
   end
 
   # used when we want to intercept *after* the function completes
-  def on_after({_module, _function, _arity} = mfa, result) do
+  def right_after({_module, _function, _arity} = mfa, result) do
     IO.puts("AFTER #{inspect(mfa)}")
     IO.puts("AFTER #{inspect(result)}")
     42

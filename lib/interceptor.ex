@@ -10,8 +10,8 @@ defmodule Interceptor do
   defmodule Interception.Config do
     def get, do: %{
       {Intercepted, :abc, 1} => [
-        on_before: {MyInterceptor, :intercept_before, 1},
-        on_after: {MyInterceptor, :intercept_after, 2}
+        before: {MyInterceptor, :intercept_before, 1},
+        after: {MyInterceptor, :intercept_after, 2}
       ]
     }
   end
@@ -53,8 +53,8 @@ defmodule Interceptor do
   Now when you run your code, whenever the `Intercepted.abc/1` function is
   called, it will be intercepted *before* it starts and *after* it completes.
 
-  In the previous example, we're defining two callbacks: one `on_before`, that
-  will be called before the intercepted function starts, and one `on_after` that
+  In the previous example, we're defining two callbacks: one `before`, that
+  will be called before the intercepted function starts, and one `after` that
   will be called after the intercepted function completes.
 
   Besides these two callbacks, you can also define `on_success` and `on_error`
@@ -70,7 +70,7 @@ defmodule Interceptor do
 
   ## Possible callbacks
 
-  * `on_before` - The callback function that you use to intercept your function
+  * `before` - The callback function that you use to intercept your function
   will be passed the MFA (`{intercepted_module, intercepted_function,
   intercepted_args}`) of the intercepted function, hence it needs to receive
   *one* argument. E.g.:
@@ -83,7 +83,7 @@ defmodule Interceptor do
   end
   ```
 
-  * `on_after` - The callback function that you use to intercept your function
+  * `after` - The callback function that you use to intercept your function
   will be passed the MFA (`{intercepted_module, intercepted_function,
   intercepted_args}`) of the intercepted function and its result, hence it needs
   to receive *two* arguments. E.g.:
@@ -190,8 +190,8 @@ defmodule Interceptor do
     mfa = get_mfa(current_module, function_hdr)
 
     function_body = function_body
-    |> set_on_before_callback(mfa)
-    |> set_on_after_callback(mfa)
+    |> set_before_callback(mfa)
+    |> set_after_callback(mfa)
     |> set_on_success_error_callback(mfa)
     |> set_lambda_wrapper(mfa)
 
@@ -223,8 +223,8 @@ defmodule Interceptor do
     wrapper_function = get_interceptor_module_function_for(mfa, :wrapper)
 
     wrapper_only_callback? = [
-      :on_before,
-      :on_after,
+      :before,
+      :after,
       :on_success,
       :on_failure
     ] |> Enum.all?(&is_nil(get_interceptor_module_function_for(mfa, &1)))
@@ -258,17 +258,17 @@ defmodule Interceptor do
   defp set_on_success_error_callback_in_place(function_body, mfa, success_callback, error_callback),
     do: wrap_do_in_try_catch(function_body, mfa, success_callback, error_callback)
 
-  defp set_on_after_callback(function_body, mfa) do
-    interceptor_callback = get_interceptor_module_function_for(mfa, :on_after)
+  defp set_after_callback(function_body, mfa) do
+    interceptor_callback = get_interceptor_module_function_for(mfa, :after)
 
-    set_on_after_callback_in_place(
+    set_after_callback_in_place(
         function_body, mfa, interceptor_callback)
   end
 
-  defp set_on_after_callback_in_place(
+  defp set_after_callback_in_place(
     function_body, _mfa, nil = _interceptor_callback), do: function_body
 
-  defp set_on_after_callback_in_place(
+  defp set_after_callback_in_place(
     function_body, mfa,
     {interceptor_module, interceptor_function}) do
 
@@ -289,17 +289,17 @@ defmodule Interceptor do
     append_to_function_body(function_body, after_quoted_call, new_var_name)
   end
 
-  defp set_on_before_callback(function_body, mfa) do
-    interceptor_callback = get_interceptor_module_function_for(mfa, :on_before)
+  defp set_before_callback(function_body, mfa) do
+    interceptor_callback = get_interceptor_module_function_for(mfa, :before)
 
-    set_on_before_callback_in_place(
+    set_before_callback_in_place(
         function_body, mfa, interceptor_callback)
   end
 
-  defp set_on_before_callback_in_place(
+  defp set_before_callback_in_place(
     function_body, _mfa, nil = _interceptor_callback), do: function_body
 
-  defp set_on_before_callback_in_place(
+  defp set_before_callback_in_place(
     function_body, mfa,
     {interceptor_module, interceptor_function}) do
 
@@ -447,6 +447,6 @@ defmodule Interceptor do
     |> put_elem(2, new_definitions)
   end
 
-  defp on_success_default_callback(_mfa, _result, _started_at), do: :noop
-  defp on_error_default_callback(_mfa, _error, _started_at), do: :noop
+  def on_success_default_callback(_mfa, _result, _started_at), do: :noop
+  def on_error_default_callback(_mfa, _error, _started_at), do: :noop
 end

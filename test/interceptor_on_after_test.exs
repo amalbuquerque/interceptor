@@ -1,7 +1,7 @@
 defmodule InterceptorOnAfterTest do
   use ExUnit.Case
 
-  @process_name :on_after_test_process
+  @process_name :after_test_process
 
   describe "module with a single function" do
     test "it intercepts the function after it is called" do

@@ -1,6 +1,6 @@
 defmodule Before.Callback do
-  def on_before({_module, _function, _arity} = mfa) do
-    Agent.update(:on_before_test_process,
+  def before({_module, _function, _arity} = mfa) do
+    Agent.update(:before_test_process,
       fn messages ->
         [{Interceptor.Utils.timestamp(), mfa} | messages]
       end)
