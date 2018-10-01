@@ -10,10 +10,10 @@ defmodule Interceptor do
   defmodule Interception.Config do
     def get, do: %{
       {Intercepted, :abc, 1} => [
-        before: {MyInterceptor, :intercept_before, 1},
-        after: {MyInterceptor, :intercept_after, 2}
-        on_success: {MyInterceptor, :intercept_on_success, 3},
-        on_error: {MyInterceptor, :intercept_on_error, 3},
+        before: {MyInterceptor, :intercept_before},
+        after: {MyInterceptor, :intercept_after}
+        on_success: {MyInterceptor, :intercept_on_success},
+        on_error: {MyInterceptor, :intercept_on_error},
         # there's also a `wrapper` callback available!
       ]
     }
@@ -152,7 +152,9 @@ defmodule Interceptor do
 
   ```
   defmodule WrapperInterceptor do
-    def called_instead_of_your_function({module, function, args}, intercepted_function_lambda) do
+    def called_instead_of_your_function(
+      {module, function, args}, intercepted_function_lambda) do
+      # do something with the result, or measure how long the lambda call took
       result = intercepted_function_lambda.()
 
       result
@@ -167,7 +169,8 @@ defmodule Interceptor do
   want to intercept. Remember that you need to configure how the interception
   will work. More information on the `Interceptor` module docs.
 
-  Here's an example of a module that we want to intercept, using the `Interceptor.intercept/1` macro:
+  Here's an example of a module that we want to intercept, using the
+  `Interceptor.intercept/1` macro:
 
   ```
   defmodule ModuleToBeIntercepted do
