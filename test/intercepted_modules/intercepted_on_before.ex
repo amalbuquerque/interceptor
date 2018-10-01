@@ -37,3 +37,11 @@ defmodule InterceptedOnBefore3 do
     defp private_function(x, y, z), do: x+y+z
   end
 end
+
+defmodule InterceptedOnBefore4 do
+  require Interceptor, as: I
+
+  I.intercept do
+    def to_intercept, do: "Hello, even without args"
+  end
+end

@@ -26,8 +26,8 @@ configuration map.
 defmodule Interception.Config do
   def get, do: %{
     {Intercepted, :abc, 1} => [
-      before: {MyInterceptor, :intercept_before, 1},
-      after: {MyInterceptor, :intercept_after, 2}
+      before: {MyInterceptor, :intercept_before},
+      after: {MyInterceptor, :intercept_after}
     ]
   }
 end

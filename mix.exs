@@ -6,12 +6,12 @@ defmodule Interceptor.MixProject do
       app: :interceptor,
       package: package(),
       source_url: "https://github.com/amalbuquerque/interceptor",
-      version: "0.1.2",
+      version: "0.1.3",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
-      docs: docs()
+      docs: docs(),
     ]
   end
 
@@ -39,6 +39,7 @@ defmodule Interceptor.MixProject do
       assets: "assets"
     ]
   end
+
   defp package() do
     [
       description: "Library to easily intercept function calls",

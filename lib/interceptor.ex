@@ -10,10 +10,10 @@ defmodule Interceptor do
   defmodule Interception.Config do
     def get, do: %{
       {Intercepted, :abc, 1} => [
-        before: {MyInterceptor, :intercept_before, 1},
-        after: {MyInterceptor, :intercept_after, 2}
-        on_success: {MyInterceptor, :intercept_on_success, 3},
-        on_error: {MyInterceptor, :intercept_on_error, 3},
+        before: {MyInterceptor, :intercept_before},
+        after: {MyInterceptor, :intercept_after}
+        on_success: {MyInterceptor, :intercept_on_success},
+        on_error: {MyInterceptor, :intercept_on_error},
         # there's also a `wrapper` callback available!
       ]
     }
@@ -152,7 +152,9 @@ defmodule Interceptor do
 
   ```
   defmodule WrapperInterceptor do
-    def called_instead_of_your_function({module, function, args}, intercepted_function_lambda) do
+    def called_instead_of_your_function(
+      {module, function, args}, intercepted_function_lambda) do
+      # do something with the result, or measure how long the lambda call took
       result = intercepted_function_lambda.()
 
       result
@@ -167,7 +169,8 @@ defmodule Interceptor do
   want to intercept. Remember that you need to configure how the interception
   will work. More information on the `Interceptor` module docs.
 
-  Here's an example of a module that we want to intercept, using the `Interceptor.intercept/1` macro:
+  Here's an example of a module that we want to intercept, using the
+  `Interceptor.intercept/1` macro:
 
   ```
   defmodule ModuleToBeIntercepted do
@@ -202,7 +205,13 @@ defmodule Interceptor do
 
   defp get_mfa(current_module, function_header) do
     {function, _context, args} = function_header
-    {current_module, function, length(args)}
+
+    number_args = case args do
+      nil -> 0
+      args -> length(args)
+    end
+
+    {current_module, function, number_args}
   end
 
   defp add_calls({:def, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) do
@@ -355,11 +364,14 @@ defmodule Interceptor do
   defp get_configuration_from_module({true, module}), do: module.get()
 
   defp config_module_exists?(module) do
-    exists? = [__info__: 1, get: 0]
+    {ensure_result, _compiled_module} = Code.ensure_compiled(module)
+    compiled? = ensure_result == :module
+
+    defines_function? = [__info__: 1, get: 0]
     |> Enum.map(fn {name, arity} -> function_exported?(module, name, arity) end)
     |> Enum.all?(&(&1))
 
-    {exists?, module}
+    {compiled? && defines_function?, module}
   end
 
   defp wrap_block_in_lambda(function_body, {_module, _func, _arity} = mfa, {wrapper_module, wrapper_func}) do
