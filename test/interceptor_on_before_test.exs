@@ -78,6 +78,22 @@ defmodule InterceptorOnBeforeTest do
     end
   end
 
+  describe "module with a single zero args function" do
+    test "it intercepts the function" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnBefore4.to_intercept()
+
+      callback_calls = get_agent_messages()
+
+      [{_intercepted_timestamp, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == "Hello, even without args"
+      assert intercepted_mfa == {InterceptedOnBefore4, :to_intercept, 0}
+    end
+  end
+
   defp spawn_agent() do
     @process_name
     |> Process.whereis()

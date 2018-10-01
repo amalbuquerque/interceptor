@@ -6,6 +6,7 @@ defmodule InterceptConfig do
   {InterceptedOnBefore2, :to_intercept, 0} => [before: {Before.Callback, :before}],
   {InterceptedOnBefore2, :other_to_intercept, 0} => [before: {Before.Callback, :before}],
   {InterceptedOnBefore3, :other_to_intercept, 1} => [before: {Before.Callback, :before}],
+  {InterceptedOnBefore4, :to_intercept, 0} => [before: {Before.Callback, :before}],
 
   # on after tests
   {InterceptedOnAfter1, :to_intercept, 0} => [after: {After.Callback, :right_after}],

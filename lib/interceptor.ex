@@ -202,7 +202,13 @@ defmodule Interceptor do
 
   defp get_mfa(current_module, function_header) do
     {function, _context, args} = function_header
-    {current_module, function, length(args)}
+
+    number_args = case args do
+      nil -> 0
+      args -> length(args)
+    end
+
+    {current_module, function, number_args}
   end
 
   defp add_calls({:def, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) do
