@@ -1,3 +1,11 @@
+# Changelog for v0.1.3
+
+## Changes
+
+* Small documentation fixes
+* Bug fix: we had an error when trying to intercept a function without arguments
+    - The AST of a `def foo, do: "hi"` function declaration is different from this `def foo(), do: "hi"`
+
 # Changelog for v0.1.2
 
 ## Changes
