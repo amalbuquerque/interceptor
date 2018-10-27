@@ -52,7 +52,7 @@ defmodule Foo do
 
     def err(x) do
       IO.puts("inside err #{x}")
-      4+5
+      _ = 4+5
       33/0
       9+8
     end

@@ -163,6 +163,7 @@ defmodule Interceptor do
   ```
   """
 
+  alias Interceptor.Utils
 
   @doc """
   Use this macro to wrap all the function definitions of your modules that you
@@ -191,9 +192,8 @@ defmodule Interceptor do
     [do: updated_do_block]
   end
 
-  defp _intercept(caller, {:def, _metadata, _function_hdr_body} = function_def) do
-    _intercept(caller, {:__block__, [], [function_def]})
-  end
+  defp _intercept(caller, {:def, _metadata, _function_hdr_body} = function_def),
+    do: _intercept(caller, {:__block__, [], [function_def]})
 
   defp _intercept(caller, {:__block__, _metadata, definitions} = do_block) do
     definitions
@@ -297,24 +297,21 @@ defmodule Interceptor do
     function_body, _mfa, nil = _interceptor_callback), do: function_body
 
   defp set_after_callback_in_place(
-    function_body, mfa,
+    function_body, {module, _function, _arguments} = mfa,
     {interceptor_module, interceptor_function}) do
 
-    new_var_name = :qwertyqwerty
-    new_var_not_hygienic = quote do
-      var!(unquote(Macro.var(new_var_name, nil)))
-    end
+    {result_var_name, result_var_not_hygienic} = random_quoted_not_higienic_var(module)
 
     after_quoted_call = quote bind_quoted: [
       interceptor_module: interceptor_module,
       interceptor_function: interceptor_function,
       mfa: Macro.escape(mfa),
-      result_var: new_var_not_hygienic
+      result_var: result_var_not_hygienic
     ] do
       Kernel.apply(interceptor_module, interceptor_function, [mfa, result_var])
     end
 
-    append_to_function_body(function_body, after_quoted_call, new_var_name)
+    append_to_function_body(function_body, after_quoted_call, result_var_name)
   end
 
   defp set_before_callback(function_body, mfa) do
@@ -388,25 +385,15 @@ defmodule Interceptor do
   end
 
   defp wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
-    start_time_var_name = :blhargblharg # TODO: Generate randomly
-    result_var_name = :abcdefghi # TODO: Generate randomly
-
-    # TODO: Horrible hack, try to use the suggested way
-    # by Valim https://groups.google.com/forum/#!topic/elixir-lang-talk/maki_LbLLVI
-    new_var_not_hygienic = quote do
-      var!(unquote(Macro.var(result_var_name, module)))
-    end
-
-    time_var_not_hygienic = quote do
-      var!(unquote(Macro.var(start_time_var_name, module)))
-    end
+    {result_var_name, result_var_not_hygienic} = random_quoted_not_higienic_var(module)
+    {_start_time_var_name, time_var_not_hygienic} = random_quoted_not_higienic_var(module)
 
     # append the success call to end of the function body
     quoted_success_call = quote bind_quoted: [
       success_module: success_module,
       success_func: success_func,
       mfa: Macro.escape(mfa),
-      result_var: new_var_not_hygienic,
+      result_var: result_var_not_hygienic,
       time_var: time_var_not_hygienic
     ] do
       Kernel.apply(success_module, success_func, [mfa, result_var, time_var])
@@ -452,23 +439,18 @@ defmodule Interceptor do
   end
 
   defp return_statement_result_after_quoted_call(statement, quoted_call, new_var_name) do
-    new_result_var = case new_var_name do
-      nil -> :qwerty # TODO: Randomly generate this
-      _ -> new_var_name
-    end
-
     {
-      new_result_var,
+      new_var_name,
       [ # first we store the statement result
         {:=, [],
         [
-          {new_result_var, [], nil},
+          {new_var_name, [], nil},
           statement,
         ]},
         # then we call the interceptor function
         quoted_call,
         # finally we return the result
-        {new_result_var, [], nil}
+        {new_var_name, [], nil}
       ]
     }
   end
@@ -478,6 +460,15 @@ defmodule Interceptor do
     |> put_elem(2, new_definitions)
   end
 
+  defp random_quoted_not_higienic_var(module) do
+    random_name = Utils.random_atom()
+
+    quoted_var_definition = quote do
+      var!(unquote(Macro.var(random_name, module)))
+    end
+
+    {random_name, quoted_var_definition}
+  end
 
   @doc """
   This function will be called as the success callback, in those cases when you
