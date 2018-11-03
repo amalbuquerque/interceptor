@@ -34,5 +34,5 @@ defmodule InterceptConfig do
   {InterceptedByWrapper4, :to_intercept, 0} => [wrapper: {Wrapper.Callback, :wrap_returns_hello, 2}],
 }
 
-  def get(), do: @config
+  def get_intercept_config(), do: @config
 end

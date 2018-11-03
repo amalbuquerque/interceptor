@@ -3,12 +3,12 @@ defmodule Interceptor do
   The Interceptor library allows you to intercept function calls, by configuring
   the interception functions and using the `Interceptor.intercept/1` macro.
 
-  Create a module with a `get/0` function that returns the interception
-  configuration map.
+  Create a module with a `get_intercept_config/0` function that returns the
+  interception configuration map.
 
   ```
   defmodule Interception.Config do
-    def get, do: %{
+    def get_intercept_config, do: %{
       {Intercepted, :abc, 1} => [
         before: {MyInterceptor, :intercept_before, 1},
         after: {MyInterceptor, :intercept_after, 2}
@@ -363,13 +363,13 @@ defmodule Interceptor do
   defp get_configuration_from_module({false, module}),
     do: raise "Your interceptor configuration is pointing to #{inspect(module)}, an invalid (non-existent?) module. Please check your configuration and try again. The module needs to exist and expose the get/0 function."
 
-  defp get_configuration_from_module({true, module}), do: module.get()
+  defp get_configuration_from_module({true, module}), do: module.get_intercept_config()
 
   defp config_module_exists?(module) do
     {ensure_result, _compiled_module} = Code.ensure_compiled(module)
     compiled? = ensure_result == :module
 
-    defines_function? = [__info__: 1, get: 0]
+    defines_function? = [__info__: 1, get_intercept_config: 0]
     |> Enum.map(fn {name, arity} -> function_exported?(module, name, arity) end)
     |> Enum.all?(&(&1))
 

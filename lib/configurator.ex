@@ -10,13 +10,13 @@ defmodule Interceptor.Configurator do
 
       @before_compile unquote(__MODULE__)
 
-      def debug(), do: get()
+      def debug_intercept_config(), do: get_intercept_config()
     end
   end
 
   defmacro __before_compile__(_env) do
     quote do
-      def get() do
+      def get_intercept_config() do
         @interceptions
         |> Enum.reverse()
         |> Enum.map(fn {mfa_to_intercept, callbacks} ->
