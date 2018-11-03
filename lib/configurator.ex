@@ -34,11 +34,9 @@ defmodule Interceptor.Configurator do
   def convert_callbacks_to_mfa([]), do: []
 
   defp convert_callback_to_mfa({type, mfa_string}) when type in [:before, :after, :on_success, :on_error, :wrapper] do
-    # TODO: Revisit this when the callbacks on the config also have the arity,
-    # for consistency sake
-    {module, function, _arity} = Utils.get_mfa_from_string(mfa_string)
+    mfa = Utils.get_mfa_from_string(mfa_string)
 
-    {type, {module, function}}
+    {type, mfa}
   end
 
   defmacro intercept(mfa_to_intercept, callbacks) do

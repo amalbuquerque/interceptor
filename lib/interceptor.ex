@@ -10,10 +10,10 @@ defmodule Interceptor do
   defmodule Interception.Config do
     def get, do: %{
       {Intercepted, :abc, 1} => [
-        before: {MyInterceptor, :intercept_before},
-        after: {MyInterceptor, :intercept_after}
-        on_success: {MyInterceptor, :intercept_on_success},
-        on_error: {MyInterceptor, :intercept_on_error},
+        before: {MyInterceptor, :intercept_before, 1},
+        after: {MyInterceptor, :intercept_after, 2}
+        on_success: {MyInterceptor, :intercept_on_success, 3},
+        on_error: {MyInterceptor, :intercept_on_error, 3},
         # there's also a `wrapper` callback available!
       ]
     }
@@ -47,9 +47,9 @@ defmodule Interceptor do
   ```
 
   In the module that you want to intercept (in our case, `Intercepted`), place
-  the functions that you want to intercept inside a `Interceptor.intercept/1`
+  the functions that you want to intercept inside an `Interceptor.intercept/1`
   block. If your functions are placed out of this block or if they don't have a
-  corresponding interceptor configuration, they won't intercepted. E.g.:
+  corresponding interceptor configuration, they won't be intercepted. E.g.:
 
   ```
   defmodule Intercepted do
@@ -64,9 +64,9 @@ defmodule Interceptor do
   Now when you run your code, whenever the `Intercepted.abc/1` function is
   called, it will be intercepted *before* it starts and *after* it completes.
 
-  In the previous example, we're defining four callbacks: one `before`, that
-  will be called before the intercepted function starts and one `after` that
-  will be called after the intercepted function completes. We also define the
+  In the previous example, we defined four callbacks: one `before` callback, that
+  will be called before the intercepted function starts; one `after` callback, that
+  will be called after the intercepted function completes. And we also defined the
   `on_success` and `on_error` callbacks, that will be called when the
   `Intercepted.abc/1` function completes successfully or raises any error,
   respectively.
@@ -78,12 +78,12 @@ defmodule Interceptor do
   _Note:_ When you use a `wrapper` callback, you can't use any other callback,
   i.e., the `before`, `after`, `on_success` and `on_error` callbacks can't be
   used for a function that is already being intercepted by a `wrapper` callback.
-  If you try so, you'll an exception in compile-time will be raised.
+  If you try so, an exception in compile-time will be raised.
 
   _Note 2:_ When you use the `wrapper` callback, it's the responsibility of the
   callback function to invoke the lambda and return the result. If you don't
-  return the result from your callback, the intercepted function return value
-  will be whatever value your `wrapper` callback function returns.
+  return the result from your callback, the return value of the intercepted
+  function will be whatever value your `wrapper` callback function returns.
 
   ## Possible callbacks
 
@@ -165,6 +165,12 @@ defmodule Interceptor do
 
   alias Interceptor.Utils
 
+  @before_callback_arity 1
+  @after_callback_arity 2
+  @on_success_callback_arity 3
+  @on_error_callback_arity 3
+  @wrapper_callback_arity 2
+
   @doc """
   Use this macro to wrap all the function definitions of your modules that you
   want to intercept. Remember that you need to configure how the interception
@@ -185,7 +191,6 @@ defmodule Interceptor do
   end
   ```
   """
-
   defmacro intercept([do: do_block_body]) do
     updated_do_block = _intercept(__CALLER__.module, do_block_body)
 
@@ -278,10 +283,10 @@ defmodule Interceptor do
   defp set_on_success_error_callback_in_place(function_body, _mfa, nil, nil), do: function_body
 
   defp set_on_success_error_callback_in_place(function_body, mfa, success_callback, nil),
-    do: wrap_do_in_try_catch(function_body, mfa, success_callback, {__MODULE__, :on_error_default_callback})
+    do: wrap_do_in_try_catch(function_body, mfa, success_callback, {__MODULE__, :on_error_default_callback, @on_error_callback_arity})
 
   defp set_on_success_error_callback_in_place(function_body, mfa, nil, error_callback),
-    do: wrap_do_in_try_catch(function_body, mfa, {__MODULE__, :on_success_default_callback}, error_callback)
+    do: wrap_do_in_try_catch(function_body, mfa, {__MODULE__, :on_success_default_callback, @on_success_callback_arity}, error_callback)
 
   defp set_on_success_error_callback_in_place(function_body, mfa, success_callback, error_callback),
     do: wrap_do_in_try_catch(function_body, mfa, success_callback, error_callback)
@@ -298,7 +303,7 @@ defmodule Interceptor do
 
   defp set_after_callback_in_place(
     function_body, {module, _function, _arguments} = mfa,
-    {interceptor_module, interceptor_function}) do
+    {interceptor_module, interceptor_function, @after_callback_arity}) do
 
     {result_var_name, result_var_not_hygienic} = random_quoted_not_higienic_var(module)
 
@@ -326,7 +331,7 @@ defmodule Interceptor do
 
   defp set_before_callback_in_place(
     function_body, mfa,
-    {interceptor_module, interceptor_function}) do
+    {interceptor_module, interceptor_function, @before_callback_arity}) do
 
     before_quoted_call = quote bind_quoted: [
       interceptor_module: interceptor_module,
@@ -371,7 +376,9 @@ defmodule Interceptor do
     {compiled? && defines_function?, module}
   end
 
-  defp wrap_block_in_lambda(function_body, {_module, _func, _arity} = mfa, {wrapper_module, wrapper_func}) do
+  defp wrap_block_in_lambda(function_body,
+    {_module, _func, _arity} = mfa,
+    {wrapper_module, wrapper_func, @wrapper_callback_arity}) do
     escaped_mfa = Macro.escape(mfa)
     lambda_wrapped = quote do
       fn ->
@@ -384,7 +391,9 @@ defmodule Interceptor do
     end
   end
 
-  defp wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
+  defp wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa,
+    {success_module, success_func, @on_success_callback_arity},
+    {error_module, error_func, @on_error_callback_arity}) do
     {result_var_name, result_var_not_hygienic} = random_quoted_not_higienic_var(module)
     {_start_time_var_name, time_var_not_hygienic} = random_quoted_not_higienic_var(module)
 
