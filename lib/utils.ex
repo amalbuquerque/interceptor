@@ -25,6 +25,14 @@ defmodule Interceptor.Utils do
     end
   end
 
+  def get_mfa_from_string({module, function, arity} = mfa) when is_atom(module) and is_atom(function) and is_integer(arity) do
+    mfa
+  end
+
+  def get_mfa_from_string(not_an_mfa) do
+    raise("Invalid MFA (#{inspect(not_an_mfa)}), it needs to be of the format '<Module>.<Function>/<Arity>' or {Module, :function, <arity>}.")
+  end
+
   defp mfa_from_string(string_module, string_function, string_arity) do
     module = String.to_atom("Elixir.#{string_module}")
 
