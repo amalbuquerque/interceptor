@@ -25,24 +25,38 @@ defmodule InterceptedOnAfterOwnConfiguration1 do
   end
 end
 
-# defmodule InterceptedOnAfter2 do
-#   require Interceptor, as: I
+defmodule InterceptedOnAfterOwnConfiguration2 do
+  use Interceptor, config: %{
+      {InterceptedOnAfterOwnConfiguration2, :to_intercept, 0} => [
+        after: {After.OwnCallback, :right_after, 2}
+      ]
+    }
 
-#   I.intercept do
-#     def to_intercept(), do: Interceptor.Utils.timestamp()
-#     def other_to_intercept(), do: "HELLO"
+  Interceptor.intercept do
+    def to_intercept(), do: Interceptor.Utils.timestamp()
+  end
+end
 
-#     IO.puts("This statement doesn't interfere in any way")
-#   end
-# end
+defmodule InterceptedOnAfterOwnConfiguration3 do
+  use Interceptor, config: %{
+      "InterceptedOnAfterOwnConfiguration3.to_intercept/0" => [
+        after: "After.OwnCallback.right_after/2"
+      ]
+    }
 
-# defmodule InterceptedOnAfter3 do
-#   require Interceptor, as: I
+  Interceptor.intercept do
+    def to_intercept(), do: Interceptor.Utils.timestamp()
+  end
+end
 
-#   I.intercept do
-#     def not_to_intercept(), do: Interceptor.Utils.timestamp()
-#     def other_to_intercept(w), do: w + private_function(1, 2, 3)
+defmodule InterceptedOnAfterOwnConfiguration4 do
+  use Interceptor, config: %{
+      "InterceptedOnAfterOwnConfiguration4.to_intercept/0" => [
+        after: {After.OwnCallback, :right_after, 2}
+      ]
+    }
 
-#     defp private_function(x, y, z), do: x+y+z
-#   end
-# end
+  Interceptor.intercept do
+    def to_intercept(), do: Interceptor.Utils.timestamp()
+  end
+end

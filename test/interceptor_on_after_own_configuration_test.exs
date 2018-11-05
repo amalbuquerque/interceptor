@@ -3,8 +3,8 @@ defmodule InterceptorOnAfterOwnConfigurationTest do
 
   @process_name :after_test_process
 
-  describe "module with a single function" do
-    test "it intercepts the function after it is called" do
+  describe "module whose own intercept config points to other module" do
+    test "it intercepts the function after it is called, overriding the global intercept config" do
       {:ok, _pid} = spawn_agent()
 
       result = InterceptedOnAfterOwnConfiguration1.to_intercept()
@@ -16,6 +16,54 @@ defmodule InterceptorOnAfterOwnConfigurationTest do
       assert length(callback_calls) == 1
       assert result == callback_result
       assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration1, :to_intercept, 0}
+    end
+  end
+
+  describe "module whose own intercept config has the intercept config" do
+    test "it intercepts the function after it is called" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfterOwnConfiguration2.to_intercept()
+
+      callback_calls = get_agent_messages()
+
+      [{:callback_overridden, callback_result, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == callback_result
+      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration2, :to_intercept, 0}
+    end
+  end
+
+  describe "module whose own intercept config has the streamlined intercept config" do
+    test "it intercepts the function after it is called" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfterOwnConfiguration3.to_intercept()
+
+      callback_calls = get_agent_messages()
+
+      [{:callback_overridden, callback_result, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == callback_result
+      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration3, :to_intercept, 0}
+    end
+  end
+
+  describe "module whose own intercept config has a mixed streamlined intercept config" do
+    test "it intercepts the function after it is called" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfterOwnConfiguration4.to_intercept()
+
+      callback_calls = get_agent_messages()
+
+      [{:callback_overridden, callback_result, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == callback_result
+      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration4, :to_intercept, 0}
     end
   end
 
