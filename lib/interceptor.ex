@@ -164,6 +164,7 @@ defmodule Interceptor do
   """
 
   alias Interceptor.Utils
+  alias Interceptor.Configurator
 
   @before_callback_arity 1
   @after_callback_arity 2
@@ -171,10 +172,19 @@ defmodule Interceptor do
   @on_error_callback_arity 3
   @wrapper_callback_arity 2
 
+  defmacro __using__(opts) do
+    own_config = Keyword.get(opts, :config)
+    {own_config_module, _bindings} = Code.eval_quoted(own_config)
+    Module.put_attribute(__CALLER__.module, :own_config, own_config_module)
+
+    quote do
+      require unquote(__MODULE__)
+    end
+  end
+
   @doc """
   Use this macro to wrap all the function definitions of your modules that you
   want to intercept. Remember that you need to configure how the interception
-  will work. More information on the `Interceptor` module docs.
 
   Here's an example of a module that we want to intercept, using the
   `Interceptor.intercept/1` macro:
@@ -242,7 +252,7 @@ defmodule Interceptor do
   end
 
   defp return_function_body(function_body) do
-    config = get_configuration()
+    config = get_global_configuration()
 
     case config && Map.get(config, :debug) do
       true ->
@@ -344,24 +354,41 @@ defmodule Interceptor do
     prepend_to_function_body(function_body, before_quoted_call)
   end
 
-  defp get_interceptor_module_function_for({_module, _function, _arity} = to_intercept, interception_type) do
-    interception_configuration = get_configuration()
+  defp get_interceptor_module_function_for({module, _function, _arity} = to_intercept, interception_type) do
+    interception_configuration = get_configuration(module)
     configuration = interception_configuration[to_intercept]
 
     configuration && Keyword.get(configuration, interception_type)
   end
 
-  defp get_configuration() do
+  defp get_configuration(module) do
+    global_config = get_global_configuration()
+
+    own_config = get_own_configuration(module)
+    Map.merge(global_config, own_config)
+  end
+
+  defp get_global_configuration() do
     Application.get_env(:interceptor, :configuration)
     |> config_module_exists?()
     |> get_configuration_from_module()
   end
 
-  defp get_configuration_from_module({false, nil}),
-    do: %{}
+  defp get_own_configuration(module) do
+    case Module.get_attribute(module, :own_config) do
+      %{} = config ->
+        Configurator.transform_streamlined_config_to_tuple_config(config)
+      module ->
+        module
+        |> config_module_exists?()
+        |> get_configuration_from_module()
+    end
+  end
+
+  defp get_configuration_from_module({false, nil}), do: %{}
 
   defp get_configuration_from_module({false, module}),
-    do: raise "Your interceptor configuration is pointing to #{inspect(module)}, an invalid (non-existent?) module. Please check your configuration and try again. The module needs to exist and expose the get/0 function."
+    do: raise "Your interceptor configuration is pointing to #{inspect(module)}, an invalid (non-existent?) module. Please check your configuration and try again. The module needs to exist and expose the get_intercept_config/0 function."
 
   defp get_configuration_from_module({true, module}), do: module.get_intercept_config()
 

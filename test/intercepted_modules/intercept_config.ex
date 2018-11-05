@@ -32,6 +32,9 @@ defmodule InterceptConfig do
   {InterceptedByWrapper2, :other_to_intercept, 0} => [wrapper: {Wrapper.Callback, :wrap_returns_result, 2}],
   {InterceptedByWrapper3, :other_to_intercept, 1} => [wrapper: {Wrapper.Callback, :wrap_returns_result, 2}],
   {InterceptedByWrapper4, :to_intercept, 0} => [wrapper: {Wrapper.Callback, :wrap_returns_hello, 2}],
+
+  # these configs will be overridden by own the module own configuration
+  {InterceptedOnAfterOwnConfiguration1, :to_intercept, 0} => [after: {After.Callback, :right_after, 2}],
 }
 
   def get_intercept_config(), do: @config
