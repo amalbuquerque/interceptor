@@ -229,7 +229,7 @@ defmodule Interceptor do
     {current_module, function, number_args}
   end
 
-  defp add_calls({:def, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) do
+  defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
     mfa = get_mfa(current_module, function_hdr)
 
     function_body = function_body
@@ -241,10 +241,6 @@ defmodule Interceptor do
     function
     |> put_elem(2, [function_hdr | [[do: function_body]]])
     |> return_function_body()
-  end
-
-  defp add_calls({:defp, _metadata, [_function_hdr | [[do: _function_body]]]} = function, _current_module) do
-    function
   end
 
   defp add_calls(something_else, _current_module) do
