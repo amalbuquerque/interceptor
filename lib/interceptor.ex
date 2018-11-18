@@ -11,9 +11,9 @@ defmodule Interceptor do
     def get_intercept_config, do: %{
       {Intercepted, :abc, 1} => [
         before: {MyInterceptor, :intercept_before, 1},
-        after: {MyInterceptor, :intercept_after, 2}
+        after: {MyInterceptor, :intercept_after, 2},
         on_success: {MyInterceptor, :intercept_on_success, 3},
-        on_error: {MyInterceptor, :intercept_on_error, 3},
+        on_error: {MyInterceptor, :intercept_on_error, 3}
         # there's also a `wrapper` callback available!
       ]
     }
@@ -46,10 +46,13 @@ defmodule Interceptor do
   end
   ```
 
-  In the module that you want to intercept (in our case, `Intercepted`), place
-  the functions that you want to intercept inside an `Interceptor.intercept/1`
-  block. If your functions are placed out of this block or if they don't have a
-  corresponding interceptor configuration, they won't be intercepted. E.g.:
+  In the module that you want to intercept (in our case, `Intercepted`), place the
+  functions that you want to intercept inside an `Interceptor.intercept/1` block.
+
+  Notice that if your functions are placed out of this block or if they don't have a
+  corresponding interceptor configuration, they won't be intercepted. In the following
+  example, the `not_intercepted/3` function can't be intercepted because it isn't enclosed
+  in the `Interceptor.intercept/1` block.
 
   ```
   defmodule Intercepted do
@@ -58,6 +61,8 @@ defmodule Interceptor do
     I.intercept do
       def abc(x), do: "Got \#\{inspect(x)\}"
     end
+
+    def not_intercepted(f, g, h), do: f+g+h
   end
   ```
 
@@ -84,6 +89,11 @@ defmodule Interceptor do
   callback function to invoke the lambda and return the result. If you don't
   return the result from your callback, the return value of the intercepted
   function will be whatever value your `wrapper` callback function returns.
+
+  _Note 3:_ You can intercept private functions in exactly the same way you intercept
+  public functions. You just need to configure the callbacks that should be invoked for
+  the given private function, and the private function definition needs to be enclosed in
+  an `Interceptor.intercept/1` macro.
 
   ## Possible callbacks
 
@@ -161,6 +171,87 @@ defmodule Interceptor do
     end
   end
   ```
+
+  ## Streamlined configuration
+
+  If you think defining a `get_intercept_config/0` function on the configuration module or
+  using the `{module, function, arity}` format is too verbose, you can use the
+  `Interceptor.Configurator` that will allow you to use its `intercept/2` macro and the
+  `"Module.function/arity"` streamlined format.
+
+  Using the `Configurator` and the new streamlined format, the previous configuration
+  would become:
+
+  ```
+  defmodule Interception.Config do
+    use Interceptor.Configurator
+
+    intercept "Intercepted.abc/1",
+      before: "MyInterceptor.intercept_before/1",
+      after: "MyInterceptor.intercept_after/2"
+      on_success: "MyInterceptor.intercept_on_success/3",
+      on_error: "MyInterceptor.intercept_on_error/3"
+      # there's also a `wrapper` callback available!
+
+    intercept "OtherModule.another_function/2",
+      on_success: "OtherInterceptor.success_callback/3"
+
+    # ...
+  end
+  ```
+
+  The `Configurator` is defining the needed `get_intercept_config/0` for you, and
+  converting those string MFAs into tuple-based MFAs. If you want to intercept another
+  function, it's just a matter of adding other `intercept
+  "OtherModule.another_function/2", ...` entry.
+
+  ## Intercept configuration on the intercepted module
+
+  If you don't want to place the intercept configuration on the application configuration
+  file, you can set it directly on the intercepted module, just add `use Interceptor,
+  config: <config_module>`, instead of requiring the `Interceptor` module. Using the
+  previous `Intercepted` module as an example:
+
+  ```
+  defmodule Intercepted do
+    use Interceptor, config: Interception.Config
+
+    Interceptor.intercept do
+      def abc(x), do: "Got \#\{inspect(x)\}"
+    end
+
+    def not_intercepted(f, g, h), do: f+g+h
+  end
+  ```
+
+  Note: If the configuration you set on the intercepted module overlaps with a
+  configuration set on the application configuration file, the former will take
+  precedence, i.e., if both the intercepted module configuration and the application
+  configuration set the rules to intercept the `Intercepted.abc/1` function, the former
+  will prevail, overriding the latter.
+
+  Instead of pointing to the intercept configuration module, you may also pass the
+  intercept configuration directly via the `config` keyword. E.g:
+
+  ```
+  defmodule Intercepted do
+    use Interceptor, config: %{
+      "Intercepted.abc/1" => [
+        before: "MyInterceptor.intercept_before/1",
+        after: "MyInterceptor.intercept_after/2"
+      ]
+    }
+
+    Interceptor.intercept do
+      def abc(x), do: "Got \#\{inspect(x)\}"
+    end
+
+    def not_intercepted(f, g, h), do: f+g+h
+  end
+  ```
+
+  Notice that we're using the streamlined format for the MFAs, but we could also use the
+  more verbose tuple-based MFAs.
   """
 
   alias Interceptor.Utils

@@ -12,24 +12,27 @@ dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:interceptor, "~> 0.1.0"}
+    {:interceptor, "~> 0.2.0"}
   ]
 end
 ```
 
 ## Getting started
 
-Create a module with a `get/0` function that returns the interception
-configuration map.
+Create a module using the `Interceptor.Configurator` module:
 
 ```elixir
 defmodule Interception.Config do
-  def get, do: %{
-    {Intercepted, :abc, 1} => [
-      before: {MyInterceptor, :intercept_before},
-      after: {MyInterceptor, :intercept_after}
-    ]
-  }
+  use Interceptor.Configurator
+
+  intercept "Intercepted.abc/1",
+    before: "MyInterceptor.intercept_before/1",
+    after: "MyInterceptor.intercept_after/2"
+    # there's also `on_success`, `on_error`
+    # and `wrapper` callbacks available!
+  
+  intercept "Intercepted.private_hello/1",
+    on_success: "MyInterceptor.intercept_on_success/3"
 end
 ```
 
@@ -50,15 +53,19 @@ defmodule MyInterceptor do
 
   def intercept_after(mfa, result),
     do: IO.puts "Intercepted #{inspect(mfa)} after it completed. Its result: #{inspect(result)}"
+
+  def intercept_on_success(mfa, result, _start_timestamp),
+    do: IO.puts "Intercepted #{inspect(mfa)} after it completed successfully. Its result: #{inspect(result)}"
 end
 ```
 
 In the module that you want to intercept (in our case, `Intercepted`), place
 the functions that you want to intercept inside a `Interceptor.intercept/1`
 block. If your functions are placed out of this block or if they don't have
-a corresponding interceptor configuration, they won't be intercepted. In the
-next snippet, the `Intercepted.foo/0` function won't be intercepted because
-it's out of the `Interceptor.intercept/1` do-block.
+a corresponding interceptor configuration, they won't be intercepted.
+
+In the next snippet, the `Intercepted.foo/0` function won't be intercepted
+because it's out of the `Interceptor.intercept/1` do-block. Notice that you can also intercept private functions.
 
 ```elixir
 defmodule Intercepted do
@@ -66,6 +73,8 @@ defmodule Intercepted do
 
   I.intercept do
     def abc(x), do: "Got #{inspect(x)}"
+
+    defp private_hello(y), do: "Hello #{inspect(y)}"
   end
 
   def foo, do: "Hi there"
@@ -73,9 +82,11 @@ end
 ```
 
 Now when you run your code, whenever the `Intercepted.abc/1` function is
-called, it will be intercepted *before* it starts and *after* it completes. You
-also have a `on_success`, `on_error` and `wrapper` callbacks. Check the full
-documentation for further examples.
+called, it will be intercepted *before* it starts and *after* it completes.
+Whenever the `Intercepted.private_hello/1` executes successfully, the
+corresponding callback will also be called. You also have `on_error` and
+`wrapper` callbacks. Check the full documentation for further examples and
+other alternative configuration approaches.
 
 ## More info
 
