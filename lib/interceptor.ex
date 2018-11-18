@@ -164,7 +164,7 @@ defmodule Interceptor do
   """
 
   alias Interceptor.Utils
-  alias Interceptor.Configurator
+  import Interceptor.Configuration
 
   @before_callback_arity 1
   @after_callback_arity 2
@@ -248,9 +248,7 @@ defmodule Interceptor do
   end
 
   defp return_function_body(function_body) do
-    config = get_global_configuration()
-
-    case config && Map.get(config, :debug) do
+    case debug_mode?() do
       true ->
         IO.puts("############# Function AST after interceptor ###")
         IO.inspect(function_body)
@@ -348,55 +346,6 @@ defmodule Interceptor do
     end
 
     prepend_to_function_body(function_body, before_quoted_call)
-  end
-
-  defp get_interceptor_module_function_for({module, _function, _arity} = to_intercept, interception_type) do
-    interception_configuration = get_configuration(module)
-    configuration = interception_configuration[to_intercept]
-
-    configuration && Keyword.get(configuration, interception_type)
-  end
-
-  defp get_configuration(module) do
-    global_config = get_global_configuration()
-
-    own_config = get_own_configuration(module)
-    Map.merge(global_config, own_config)
-  end
-
-  defp get_global_configuration() do
-    Application.get_env(:interceptor, :configuration)
-    |> config_module_exists?()
-    |> get_configuration_from_module()
-  end
-
-  defp get_own_configuration(module) do
-    case Module.get_attribute(module, :own_config) do
-      %{} = config ->
-        Configurator.transform_streamlined_config_to_tuple_config(config)
-      module ->
-        module
-        |> config_module_exists?()
-        |> get_configuration_from_module()
-    end
-  end
-
-  defp get_configuration_from_module({false, nil}), do: %{}
-
-  defp get_configuration_from_module({false, module}),
-    do: raise "Your interceptor configuration is pointing to #{inspect(module)}, an invalid (non-existent?) module. Please check your configuration and try again. The module needs to exist and expose the get_intercept_config/0 function."
-
-  defp get_configuration_from_module({true, module}), do: module.get_intercept_config()
-
-  defp config_module_exists?(module) do
-    {ensure_result, _compiled_module} = Code.ensure_compiled(module)
-    compiled? = ensure_result == :module
-
-    defines_function? = [__info__: 1, get_intercept_config: 0]
-    |> Enum.map(fn {name, arity} -> function_exported?(module, name, arity) end)
-    |> Enum.all?(&(&1))
-
-    {compiled? && defines_function?, module}
   end
 
   defp wrap_block_in_lambda(function_body,

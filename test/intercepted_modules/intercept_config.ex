@@ -1,6 +1,5 @@
 defmodule InterceptConfig do
   @config %{
-  # :debug => true,
   # on before tests
   {InterceptedOnBefore1, :to_intercept, 0} => [before: {Before.Callback, :before, 1}],
   {InterceptedOnBefore2, :to_intercept, 0} => [before: {Before.Callback, :before, 1}],
