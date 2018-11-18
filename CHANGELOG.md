@@ -7,6 +7,10 @@
 * Ability to intercept private functions as well
 * Refactor of the configuration code to its own `Interceptor.Configuration` module
 
+## TODO
+
+* Allow multiple callbacks for a given moment, i.e., allow more than one callback to be invoked `after` the intercepted function is called, for example.
+
 # Changelog for v0.1.3
 
 ## Changes
