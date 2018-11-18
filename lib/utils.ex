@@ -1,4 +1,6 @@
 defmodule Interceptor.Utils do
+  alias Interceptor.Configuration
+
   @mfa_regex ~r/(.*)\.(.*)\/(\d)$/
 
   def timestamp(), do: :os.system_time(:microsecond)
@@ -42,7 +44,8 @@ defmodule Interceptor.Utils do
     function = String.to_atom(string_function)
     arity = String.to_integer(string_arity)
 
-    if !(compiled? && function_exported?(module, function, arity)) do
+    function_exists? = compiled? && function_exported?(module, function, arity)
+    if Configuration.debug_mode?() && !function_exists? do
       IO.puts("Warning! Invalid MFA (#{module}.#{function}/#{arity}), the given function doesn't exist.")
     end
 
