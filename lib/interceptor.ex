@@ -3,17 +3,17 @@ defmodule Interceptor do
   The Interceptor library allows you to intercept function calls, by configuring
   the interception functions and using the `Interceptor.intercept/1` macro.
 
-  Create a module with a `get/0` function that returns the interception
-  configuration map.
+  Create a module with a `get_intercept_config/0` function that returns the
+  interception configuration map.
 
   ```
   defmodule Interception.Config do
-    def get, do: %{
+    def get_intercept_config, do: %{
       {Intercepted, :abc, 1} => [
-        before: {MyInterceptor, :intercept_before},
-        after: {MyInterceptor, :intercept_after}
-        on_success: {MyInterceptor, :intercept_on_success},
-        on_error: {MyInterceptor, :intercept_on_error},
+        before: {MyInterceptor, :intercept_before, 1},
+        after: {MyInterceptor, :intercept_after, 2},
+        on_success: {MyInterceptor, :intercept_on_success, 3},
+        on_error: {MyInterceptor, :intercept_on_error, 3}
         # there's also a `wrapper` callback available!
       ]
     }
@@ -46,10 +46,13 @@ defmodule Interceptor do
   end
   ```
 
-  In the module that you want to intercept (in our case, `Intercepted`), place
-  the functions that you want to intercept inside a `Interceptor.intercept/1`
-  block. If your functions are placed out of this block or if they don't have a
-  corresponding interceptor configuration, they won't intercepted. E.g.:
+  In the module that you want to intercept (in our case, `Intercepted`), place the
+  functions that you want to intercept inside an `Interceptor.intercept/1` block.
+
+  Notice that if your functions are placed out of this block or if they don't have a
+  corresponding interceptor configuration, they won't be intercepted. In the following
+  example, the `not_intercepted/3` function can't be intercepted because it isn't enclosed
+  in the `Interceptor.intercept/1` block.
 
   ```
   defmodule Intercepted do
@@ -58,15 +61,17 @@ defmodule Interceptor do
     I.intercept do
       def abc(x), do: "Got \#\{inspect(x)\}"
     end
+
+    def not_intercepted(f, g, h), do: f+g+h
   end
   ```
 
   Now when you run your code, whenever the `Intercepted.abc/1` function is
   called, it will be intercepted *before* it starts and *after* it completes.
 
-  In the previous example, we're defining four callbacks: one `before`, that
-  will be called before the intercepted function starts and one `after` that
-  will be called after the intercepted function completes. We also define the
+  In the previous example, we defined four callbacks: one `before` callback, that
+  will be called before the intercepted function starts; one `after` callback, that
+  will be called after the intercepted function completes. And we also defined the
   `on_success` and `on_error` callbacks, that will be called when the
   `Intercepted.abc/1` function completes successfully or raises any error,
   respectively.
@@ -78,12 +83,17 @@ defmodule Interceptor do
   _Note:_ When you use a `wrapper` callback, you can't use any other callback,
   i.e., the `before`, `after`, `on_success` and `on_error` callbacks can't be
   used for a function that is already being intercepted by a `wrapper` callback.
-  If you try so, you'll an exception in compile-time will be raised.
+  If you try so, an exception in compile-time will be raised.
 
   _Note 2:_ When you use the `wrapper` callback, it's the responsibility of the
   callback function to invoke the lambda and return the result. If you don't
-  return the result from your callback, the intercepted function return value
-  will be whatever value your `wrapper` callback function returns.
+  return the result from your callback, the return value of the intercepted
+  function will be whatever value your `wrapper` callback function returns.
+
+  _Note 3:_ You can intercept private functions in exactly the same way you intercept
+  public functions. You just need to configure the callbacks that should be invoked for
+  the given private function, and the private function definition needs to be enclosed in
+  an `Interceptor.intercept/1` macro.
 
   ## Possible callbacks
 
@@ -161,13 +171,111 @@ defmodule Interceptor do
     end
   end
   ```
+
+  ## Streamlined configuration
+
+  If you think defining a `get_intercept_config/0` function on the configuration module or
+  using the `{module, function, arity}` format is too verbose, you can use the
+  `Interceptor.Configurator` that will allow you to use its `intercept/2` macro and the
+  `"Module.function/arity"` streamlined format.
+
+  Using the `Configurator` and the new streamlined format, the previous configuration
+  would become:
+
+  ```
+  defmodule Interception.Config do
+    use Interceptor.Configurator
+
+    intercept "Intercepted.abc/1",
+      before: "MyInterceptor.intercept_before/1",
+      after: "MyInterceptor.intercept_after/2"
+      on_success: "MyInterceptor.intercept_on_success/3",
+      on_error: "MyInterceptor.intercept_on_error/3"
+      # there's also a `wrapper` callback available!
+
+    intercept "OtherModule.another_function/2",
+      on_success: "OtherInterceptor.success_callback/3"
+
+    # ...
+  end
+  ```
+
+  The `Configurator` is defining the needed `get_intercept_config/0` for you, and
+  converting those string MFAs into tuple-based MFAs. If you want to intercept another
+  function, it's just a matter of adding other `intercept
+  "OtherModule.another_function/2", ...` entry.
+
+  ## Intercept configuration on the intercepted module
+
+  If you don't want to place the intercept configuration on the application configuration
+  file, you can set it directly on the intercepted module, just add `use Interceptor,
+  config: <config_module>`, instead of requiring the `Interceptor` module. Using the
+  previous `Intercepted` module as an example:
+
+  ```
+  defmodule Intercepted do
+    use Interceptor, config: Interception.Config
+
+    Interceptor.intercept do
+      def abc(x), do: "Got \#\{inspect(x)\}"
+    end
+
+    def not_intercepted(f, g, h), do: f+g+h
+  end
+  ```
+
+  Note: If the configuration you set on the intercepted module overlaps with a
+  configuration set on the application configuration file, the former will take
+  precedence, i.e., if both the intercepted module configuration and the application
+  configuration set the rules to intercept the `Intercepted.abc/1` function, the former
+  will prevail, overriding the latter.
+
+  Instead of pointing to the intercept configuration module, you may also pass the
+  intercept configuration directly via the `config` keyword. E.g:
+
+  ```
+  defmodule Intercepted do
+    use Interceptor, config: %{
+      "Intercepted.abc/1" => [
+        before: "MyInterceptor.intercept_before/1",
+        after: "MyInterceptor.intercept_after/2"
+      ]
+    }
+
+    Interceptor.intercept do
+      def abc(x), do: "Got \#\{inspect(x)\}"
+    end
+
+    def not_intercepted(f, g, h), do: f+g+h
+  end
+  ```
+
+  Notice that we're using the streamlined format for the MFAs, but we could also use the
+  more verbose tuple-based MFAs.
   """
 
+  alias Interceptor.Utils
+  import Interceptor.Configuration
+
+  @before_callback_arity 1
+  @after_callback_arity 2
+  @on_success_callback_arity 3
+  @on_error_callback_arity 3
+  @wrapper_callback_arity 2
+
+  defmacro __using__(opts) do
+    own_config = Keyword.get(opts, :config)
+    {own_config_module, _bindings} = Code.eval_quoted(own_config)
+    Module.put_attribute(__CALLER__.module, :own_config, own_config_module)
+
+    quote do
+      require unquote(__MODULE__)
+    end
+  end
 
   @doc """
   Use this macro to wrap all the function definitions of your modules that you
   want to intercept. Remember that you need to configure how the interception
-  will work. More information on the `Interceptor` module docs.
 
   Here's an example of a module that we want to intercept, using the
   `Interceptor.intercept/1` macro:
@@ -184,16 +292,14 @@ defmodule Interceptor do
   end
   ```
   """
-
   defmacro intercept([do: do_block_body]) do
     updated_do_block = _intercept(__CALLER__.module, do_block_body)
 
     [do: updated_do_block]
   end
 
-  defp _intercept(caller, {:def, _metadata, _function_hdr_body} = function_def) do
-    _intercept(caller, {:__block__, [], [function_def]})
-  end
+  defp _intercept(caller, {:def, _metadata, _function_hdr_body} = function_def),
+    do: _intercept(caller, {:__block__, [], [function_def]})
 
   defp _intercept(caller, {:__block__, _metadata, definitions} = do_block) do
     definitions
@@ -214,7 +320,7 @@ defmodule Interceptor do
     {current_module, function, number_args}
   end
 
-  defp add_calls({:def, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) do
+  defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
     mfa = get_mfa(current_module, function_hdr)
 
     function_body = function_body
@@ -228,18 +334,12 @@ defmodule Interceptor do
     |> return_function_body()
   end
 
-  defp add_calls({:defp, _metadata, [_function_hdr | [[do: _function_body]]]} = function, _current_module) do
-    function
-  end
-
   defp add_calls(something_else, _current_module) do
     something_else
   end
 
   defp return_function_body(function_body) do
-    config = get_configuration()
-
-    case config && Map.get(config, :debug) do
+    case debug_mode?() do
       true ->
         IO.puts("############# Function AST after interceptor ###")
         IO.inspect(function_body)
@@ -278,10 +378,10 @@ defmodule Interceptor do
   defp set_on_success_error_callback_in_place(function_body, _mfa, nil, nil), do: function_body
 
   defp set_on_success_error_callback_in_place(function_body, mfa, success_callback, nil),
-    do: wrap_do_in_try_catch(function_body, mfa, success_callback, {__MODULE__, :on_error_default_callback})
+    do: wrap_do_in_try_catch(function_body, mfa, success_callback, {__MODULE__, :on_error_default_callback, @on_error_callback_arity})
 
   defp set_on_success_error_callback_in_place(function_body, mfa, nil, error_callback),
-    do: wrap_do_in_try_catch(function_body, mfa, {__MODULE__, :on_success_default_callback}, error_callback)
+    do: wrap_do_in_try_catch(function_body, mfa, {__MODULE__, :on_success_default_callback, @on_success_callback_arity}, error_callback)
 
   defp set_on_success_error_callback_in_place(function_body, mfa, success_callback, error_callback),
     do: wrap_do_in_try_catch(function_body, mfa, success_callback, error_callback)
@@ -297,24 +397,21 @@ defmodule Interceptor do
     function_body, _mfa, nil = _interceptor_callback), do: function_body
 
   defp set_after_callback_in_place(
-    function_body, mfa,
-    {interceptor_module, interceptor_function}) do
+    function_body, {module, _function, _arguments} = mfa,
+    {interceptor_module, interceptor_function, @after_callback_arity}) do
 
-    new_var_name = :qwertyqwerty
-    new_var_not_hygienic = quote do
-      var!(unquote(Macro.var(new_var_name, nil)))
-    end
+    {result_var_name, result_var_not_hygienic} = random_quoted_not_higienic_var(module)
 
     after_quoted_call = quote bind_quoted: [
       interceptor_module: interceptor_module,
       interceptor_function: interceptor_function,
       mfa: Macro.escape(mfa),
-      result_var: new_var_not_hygienic
+      result_var: result_var_not_hygienic
     ] do
       Kernel.apply(interceptor_module, interceptor_function, [mfa, result_var])
     end
 
-    append_to_function_body(function_body, after_quoted_call, new_var_name)
+    append_to_function_body(function_body, after_quoted_call, result_var_name)
   end
 
   defp set_before_callback(function_body, mfa) do
@@ -329,7 +426,7 @@ defmodule Interceptor do
 
   defp set_before_callback_in_place(
     function_body, mfa,
-    {interceptor_module, interceptor_function}) do
+    {interceptor_module, interceptor_function, @before_callback_arity}) do
 
     before_quoted_call = quote bind_quoted: [
       interceptor_module: interceptor_module,
@@ -342,39 +439,9 @@ defmodule Interceptor do
     prepend_to_function_body(function_body, before_quoted_call)
   end
 
-  defp get_interceptor_module_function_for({_module, _function, _arity} = to_intercept, interception_type) do
-    interception_configuration = get_configuration()
-    configuration = interception_configuration[to_intercept]
-
-    configuration && Keyword.get(configuration, interception_type)
-  end
-
-  defp get_configuration() do
-    Application.get_env(:interceptor, :configuration)
-    |> config_module_exists?()
-    |> get_configuration_from_module()
-  end
-
-  defp get_configuration_from_module({false, nil}),
-    do: %{}
-
-  defp get_configuration_from_module({false, module}),
-    do: raise "Your interceptor configuration is pointing to #{inspect(module)}, an invalid (non-existent?) module. Please check your configuration and try again. The module needs to exist and expose the get/0 function."
-
-  defp get_configuration_from_module({true, module}), do: module.get()
-
-  defp config_module_exists?(module) do
-    {ensure_result, _compiled_module} = Code.ensure_compiled(module)
-    compiled? = ensure_result == :module
-
-    defines_function? = [__info__: 1, get: 0]
-    |> Enum.map(fn {name, arity} -> function_exported?(module, name, arity) end)
-    |> Enum.all?(&(&1))
-
-    {compiled? && defines_function?, module}
-  end
-
-  defp wrap_block_in_lambda(function_body, {_module, _func, _arity} = mfa, {wrapper_module, wrapper_func}) do
+  defp wrap_block_in_lambda(function_body,
+    {_module, _func, _arity} = mfa,
+    {wrapper_module, wrapper_func, @wrapper_callback_arity}) do
     escaped_mfa = Macro.escape(mfa)
     lambda_wrapped = quote do
       fn ->
@@ -387,26 +454,18 @@ defmodule Interceptor do
     end
   end
 
-  defp wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa, {success_module, success_func}, {error_module, error_func}) do
-    start_time_var_name = :blhargblharg # TODO: Generate randomly
-    result_var_name = :abcdefghi # TODO: Generate randomly
-
-    # TODO: Horrible hack, try to use the suggested way
-    # by Valim https://groups.google.com/forum/#!topic/elixir-lang-talk/maki_LbLLVI
-    new_var_not_hygienic = quote do
-      var!(unquote(Macro.var(result_var_name, module)))
-    end
-
-    time_var_not_hygienic = quote do
-      var!(unquote(Macro.var(start_time_var_name, module)))
-    end
+  defp wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa,
+    {success_module, success_func, @on_success_callback_arity},
+    {error_module, error_func, @on_error_callback_arity}) do
+    {result_var_name, result_var_not_hygienic} = random_quoted_not_higienic_var(module)
+    {_start_time_var_name, time_var_not_hygienic} = random_quoted_not_higienic_var(module)
 
     # append the success call to end of the function body
     quoted_success_call = quote bind_quoted: [
       success_module: success_module,
       success_func: success_func,
       mfa: Macro.escape(mfa),
-      result_var: new_var_not_hygienic,
+      result_var: result_var_not_hygienic,
       time_var: time_var_not_hygienic
     ] do
       Kernel.apply(success_module, success_func, [mfa, result_var, time_var])
@@ -452,23 +511,18 @@ defmodule Interceptor do
   end
 
   defp return_statement_result_after_quoted_call(statement, quoted_call, new_var_name) do
-    new_result_var = case new_var_name do
-      nil -> :qwerty # TODO: Randomly generate this
-      _ -> new_var_name
-    end
-
     {
-      new_result_var,
+      new_var_name,
       [ # first we store the statement result
         {:=, [],
         [
-          {new_result_var, [], nil},
+          {new_var_name, [], nil},
           statement,
         ]},
         # then we call the interceptor function
         quoted_call,
         # finally we return the result
-        {new_result_var, [], nil}
+        {new_var_name, [], nil}
       ]
     }
   end
@@ -478,6 +532,15 @@ defmodule Interceptor do
     |> put_elem(2, new_definitions)
   end
 
+  defp random_quoted_not_higienic_var(module) do
+    random_name = Utils.random_atom()
+
+    quoted_var_definition = quote do
+      var!(unquote(Macro.var(random_name, module)))
+    end
+
+    {random_name, quoted_var_definition}
+  end
 
   @doc """
   This function will be called as the success callback, in those cases when you
