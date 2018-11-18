@@ -1,4 +1,5 @@
 use Mix.Config
 
 config :interceptor,
-  configuration: InterceptConfig
+  configuration: InterceptConfig,
+  debug: false

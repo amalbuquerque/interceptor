@@ -3,11 +3,10 @@ defmodule Interceptor.Configuration do
   alias Interceptor.Configurator
 
   def debug_mode? do
-    config = get_global_configuration()
+    debug_mode? = Application.get_env(:interceptor, :debug, false)
 
-    case config && Map.get(config, :debug) do
-      nil -> false
-      value when is_boolean(value)-> value
+    case is_boolean(debug_mode?) do
+      true -> debug_mode?
       _ -> false
     end
   end
