@@ -323,8 +323,18 @@ defmodule Interceptor do
   defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
     mfa = get_mfa(current_module, function_hdr)
 
+    arg_names = case mfa do
+      {InterceptedOnBefore3, :other_to_intercept, 1} ->
+        IO.puts("FUNCTION HEADER")
+        IO.inspect(function_hdr)
+        # TODO: extract arg names
+        [:w]
+      _ ->
+        []
+    end
+
     function_body = function_body
-    |> set_before_callback(mfa)
+    |> set_before_callback(mfa, arg_names)
     |> set_after_callback(mfa)
     |> set_on_success_error_callback(mfa)
     |> set_lambda_wrapper(mfa)
@@ -414,26 +424,32 @@ defmodule Interceptor do
     append_to_function_body(function_body, after_quoted_call, result_var_name)
   end
 
-  defp set_before_callback(function_body, mfa) do
+  defp set_before_callback(function_body, mfa, arg_names \\ []) do
     interceptor_callback = get_interceptor_module_function_for(mfa, :before)
 
     set_before_callback_in_place(
-        function_body, mfa, interceptor_callback)
+        function_body, mfa, interceptor_callback, arg_names)
   end
 
   defp set_before_callback_in_place(
-    function_body, _mfa, nil = _interceptor_callback), do: function_body
+    function_body, _mfa, nil = _interceptor_callback, _arg_names), do: function_body
 
   defp set_before_callback_in_place(
     function_body, mfa,
-    {interceptor_module, interceptor_function, @before_callback_arity}) do
+    {interceptor_module, interceptor_function, _arity}, arg_names) do
+
+    arg_values_not_hygienic = arg_names
+                 |> Enum.map(fn arg_name ->
+                   quote do: var!(unquote(Macro.var(arg_name, nil)))
+                 end)
 
     before_quoted_call = quote bind_quoted: [
       interceptor_module: interceptor_module,
       interceptor_function: interceptor_function,
-      mfa: Macro.escape(mfa)
+      mfa: Macro.escape(mfa),
+      arg_values: arg_values_not_hygienic
     ] do
-      Kernel.apply(interceptor_module, interceptor_function, [mfa])
+      Kernel.apply(interceptor_module, interceptor_function, [mfa, arg_values])
     end
 
     prepend_to_function_body(function_body, before_quoted_call)

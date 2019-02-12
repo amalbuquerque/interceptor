@@ -4,7 +4,7 @@ defmodule InterceptConfig do
   {InterceptedOnBefore1, :to_intercept, 0} => [before: {Before.Callback, :before, 1}],
   {InterceptedOnBefore2, :to_intercept, 0} => [before: {Before.Callback, :before, 1}],
   {InterceptedOnBefore2, :other_to_intercept, 0} => [before: {Before.Callback, :before, 1}],
-  {InterceptedOnBefore3, :other_to_intercept, 1} => [before: {Before.Callback, :before, 1}],
+  {InterceptedOnBefore3, :other_to_intercept, 1} => [before: {Before.Callback, :before_with_arg_values, 2}],
   {InterceptedOnBefore4, :to_intercept, 0} => [before: {Before.Callback, :before, 1}],
 
   # on after tests

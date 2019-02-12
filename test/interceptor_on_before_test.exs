@@ -54,14 +54,17 @@ defmodule InterceptorOnBeforeTest do
       {:ok, _pid} = spawn_agent()
 
       result = InterceptedOnBefore3.other_to_intercept(4)
+      # HEADERS
+      # {:other_to_intercept, [line: 35], [{:w, [line: 35], nil}]}
 
       callback_calls = get_agent_messages()
 
-      [{_intercepted_timestamp, intercepted_mfa}] = callback_calls
+      [{_intercepted_timestamp, intercepted_mfa, arg_values}] = callback_calls
 
       assert length(callback_calls) == 1
       assert result == 10
       assert intercepted_mfa == {InterceptedOnBefore3, :other_to_intercept, 1}
+      assert arg_values == [4]
     end
 
     test "it doesn't intercept the function that isn't configured" do

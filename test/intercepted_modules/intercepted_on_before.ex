@@ -6,6 +6,14 @@ defmodule Before.Callback do
       end)
     "Doesn't influence the function at all"
   end
+
+  def before_with_arg_values({_module, _function, _arity} = mfa, arg_values) do
+    Agent.update(:before_test_process,
+      fn messages ->
+        [{Interceptor.Utils.timestamp(), mfa, arg_values} | messages]
+      end)
+    "Doesn't influence the function at all"
+  end
 end
 
 defmodule InterceptedOnBefore1 do
