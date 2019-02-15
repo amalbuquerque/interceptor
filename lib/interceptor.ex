@@ -323,14 +323,14 @@ defmodule Interceptor do
   defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
     mfa = get_mfa(current_module, function_hdr)
 
-    function_body = function_body
+    new_function_body = function_body
     |> set_before_callback(mfa)
     |> set_after_callback(mfa)
     |> set_on_success_error_callback(mfa)
     |> set_lambda_wrapper(mfa)
 
     function
-    |> put_elem(2, [function_hdr | [[do: function_body]]])
+    |> put_elem(2, [function_hdr | [[do: new_function_body]]])
     |> return_function_body()
   end
 
