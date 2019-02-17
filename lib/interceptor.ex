@@ -256,6 +256,7 @@ defmodule Interceptor do
 
   alias Interceptor.Utils
   import Interceptor.Configuration
+  import Interceptor.FunctionArguments
 
   @before_callback_arity 1
   @after_callback_arity 2
@@ -320,17 +321,27 @@ defmodule Interceptor do
     {current_module, function, number_args}
   end
 
+  defp get_mfargs(current_module, function_header, args_names) do
+    {current_module, current_function, _arity} = get_mfa(current_module, function_header)
+
+    args_values = get_not_hygienic_args_values_ast(args_names)
+
+    {current_module, current_function, args_values}
+  end
+
   defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
-    mfa = get_mfa(current_module, function_hdr)
+    {new_function_hdr, args_names} = get_function_header_with_new_args_names(function_hdr, current_module)
+    mfargs = get_mfargs(current_module, function_hdr, args_names)
+
 
     new_function_body = function_body
-    |> set_before_callback(mfa)
-    |> set_after_callback(mfa)
-    |> set_on_success_error_callback(mfa)
-    |> set_lambda_wrapper(mfa)
+    |> set_before_callback(mfargs)
+    |> set_after_callback(mfargs)
+    |> set_on_success_error_callback(mfargs)
+    |> set_lambda_wrapper(mfargs)
 
     function
-    |> put_elem(2, [function_hdr | [[do: new_function_body]]])
+    |> put_elem(2, [new_function_hdr | [[do: new_function_body]]])
     |> return_function_body()
   end
 
@@ -414,26 +425,26 @@ defmodule Interceptor do
     append_to_function_body(function_body, after_quoted_call, result_var_name)
   end
 
-  defp set_before_callback(function_body, mfa) do
-    interceptor_callback = get_interceptor_module_function_for(mfa, :before)
+  defp set_before_callback(function_body, mfargs) do
+    interceptor_callback = get_interceptor_module_function_for(mfargs, :before)
 
     set_before_callback_in_place(
-        function_body, mfa, interceptor_callback)
+        function_body, mfargs, interceptor_callback)
   end
 
   defp set_before_callback_in_place(
-    function_body, _mfa, nil = _interceptor_callback), do: function_body
+    function_body, _mfargs, nil = _interceptor_callback), do: function_body
 
   defp set_before_callback_in_place(
-    function_body, mfa,
+    function_body, mfargs,
     {interceptor_module, interceptor_function, @before_callback_arity}) do
 
     before_quoted_call = quote bind_quoted: [
       interceptor_module: interceptor_module,
       interceptor_function: interceptor_function,
-      mfa: Macro.escape(mfa)
+      mfargs: escape_module_function_but_not_args(mfargs)
     ] do
-      Kernel.apply(interceptor_module, interceptor_function, [mfa])
+      Kernel.apply(interceptor_module, interceptor_function, [mfargs])
     end
 
     prepend_to_function_body(function_body, before_quoted_call)

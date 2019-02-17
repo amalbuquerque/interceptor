@@ -15,7 +15,7 @@ defmodule InterceptorOnBeforeTest do
 
       assert length(callback_calls) == 1
       assert result > intercepted_timestamp
-      assert intercepted_mfa == {InterceptedOnBefore1, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnBefore1, :to_intercept, []}
     end
   end
 
@@ -31,7 +31,7 @@ defmodule InterceptorOnBeforeTest do
 
       assert length(callback_calls) == 1
       assert result > intercepted_timestamp
-      assert intercepted_mfa == {InterceptedOnBefore2, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnBefore2, :to_intercept, []}
     end
 
     test "it also intercepts the other function" do
@@ -45,7 +45,7 @@ defmodule InterceptorOnBeforeTest do
 
       assert length(callback_calls) == 1
       assert result == "HELLO"
-      assert intercepted_mfa == {InterceptedOnBefore2, :other_to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnBefore2, :other_to_intercept, []}
     end
   end
 
@@ -61,7 +61,7 @@ defmodule InterceptorOnBeforeTest do
 
       assert length(callback_calls) == 1
       assert result == 10
-      assert intercepted_mfa == {InterceptedOnBefore3, :other_to_intercept, 1}
+      assert intercepted_mfa == {InterceptedOnBefore3, :other_to_intercept, [4]}
     end
 
     test "it doesn't intercept the function that isn't configured" do
@@ -90,7 +90,7 @@ defmodule InterceptorOnBeforeTest do
 
       assert length(callback_calls) == 1
       assert result == "Hello, even without args"
-      assert intercepted_mfa == {InterceptedOnBefore4, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnBefore4, :to_intercept, []}
     end
   end
 
