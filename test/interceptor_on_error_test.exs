@@ -22,7 +22,7 @@ defmodule InterceptorOnErrorTest do
 
       assert length(callback_calls) == 1
       assert %ArithmeticError{} == intercepted_error
-      assert intercepted_mfa == {InterceptedOnError1, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnError1, :to_intercept, []}
     end
   end
 
@@ -51,7 +51,7 @@ defmodule InterceptorOnErrorTest do
       time_it_took_microseconds = intercepted_timestamp - started_at_timestamp
       assert 200_000 < time_it_took_microseconds
       assert %ArithmeticError{} == intercepted_error
-      assert intercepted_mfa == {InterceptedOnError2, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnError2, :to_intercept, []}
     end
 
     test "it also intercepts the other function" do
@@ -71,7 +71,7 @@ defmodule InterceptorOnErrorTest do
       }] = callback_calls
 
       assert length(callback_calls) == 1
-      assert intercepted_mfa == {InterceptedOnError2, :other_to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnError2, :other_to_intercept, []}
     end
   end
 
@@ -93,7 +93,7 @@ defmodule InterceptorOnErrorTest do
       }] = callback_calls
 
       assert length(callback_calls) == 1
-      assert intercepted_mfa == {InterceptedOnError3, :other_to_intercept, 1}
+      assert intercepted_mfa == {InterceptedOnError3, :other_to_intercept, [4]}
     end
 
     test "it doesn't intercept the function that isn't configured" do

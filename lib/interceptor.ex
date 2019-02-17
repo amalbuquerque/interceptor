@@ -379,23 +379,23 @@ defmodule Interceptor do
   defp set_lambda_wrapper_in_place(function_body, mfa, wrapper_function, true),
     do: wrap_block_in_lambda(function_body, mfa, wrapper_function)
 
-  defp set_on_success_error_callback(function_body, mfa) do
-    success_callback = get_interceptor_module_function_for(mfa, :on_success)
-    error_callback = get_interceptor_module_function_for(mfa, :on_error)
+  defp set_on_success_error_callback(function_body, mfargs) do
+    success_callback = get_interceptor_module_function_for(mfargs, :on_success)
+    error_callback = get_interceptor_module_function_for(mfargs, :on_error)
 
-    set_on_success_error_callback_in_place(function_body, mfa, success_callback, error_callback)
+    set_on_success_error_callback_in_place(function_body, mfargs, success_callback, error_callback)
   end
 
-  defp set_on_success_error_callback_in_place(function_body, _mfa, nil, nil), do: function_body
+  defp set_on_success_error_callback_in_place(function_body, _mfargs, nil, nil), do: function_body
 
-  defp set_on_success_error_callback_in_place(function_body, mfa, success_callback, nil),
-    do: wrap_do_in_try_catch(function_body, mfa, success_callback, {__MODULE__, :on_error_default_callback, @on_error_callback_arity})
+  defp set_on_success_error_callback_in_place(function_body, mfargs, success_callback, nil),
+    do: wrap_do_in_try_catch(function_body, mfargs, success_callback, {__MODULE__, :on_error_default_callback, @on_error_callback_arity})
 
-  defp set_on_success_error_callback_in_place(function_body, mfa, nil, error_callback),
-    do: wrap_do_in_try_catch(function_body, mfa, {__MODULE__, :on_success_default_callback, @on_success_callback_arity}, error_callback)
+  defp set_on_success_error_callback_in_place(function_body, mfargs, nil, error_callback),
+    do: wrap_do_in_try_catch(function_body, mfargs, {__MODULE__, :on_success_default_callback, @on_success_callback_arity}, error_callback)
 
-  defp set_on_success_error_callback_in_place(function_body, mfa, success_callback, error_callback),
-    do: wrap_do_in_try_catch(function_body, mfa, success_callback, error_callback)
+  defp set_on_success_error_callback_in_place(function_body, mfargs, success_callback, error_callback),
+    do: wrap_do_in_try_catch(function_body, mfargs, success_callback, error_callback)
 
   defp set_after_callback(function_body, mfargs) do
     interceptor_callback = get_interceptor_module_function_for(mfargs, :after)
@@ -465,32 +465,32 @@ defmodule Interceptor do
     end
   end
 
-  defp wrap_do_in_try_catch(function_body, {module, _func, _arity} = mfa,
+  defp wrap_do_in_try_catch(function_body, {module, _func, _args} = mfargs,
     {success_module, success_func, @on_success_callback_arity},
     {error_module, error_func, @on_error_callback_arity}) do
     {result_var_name, result_var_not_hygienic} = random_quoted_not_higienic_var(module)
     {_start_time_var_name, time_var_not_hygienic} = random_quoted_not_higienic_var(module)
 
+    escaped_mfargs = escape_module_function_but_not_args(mfargs)
     # append the success call to end of the function body
     quoted_success_call = quote bind_quoted: [
       success_module: success_module,
       success_func: success_func,
-      mfa: Macro.escape(mfa),
+      mfargs: escaped_mfargs,
       result_var: result_var_not_hygienic,
       time_var: time_var_not_hygienic
     ] do
-      Kernel.apply(success_module, success_func, [mfa, result_var, time_var])
+      Kernel.apply(success_module, success_func, [mfargs, result_var, time_var])
     end
     new_function_body = append_to_function_body(function_body, quoted_success_call, result_var_name)
 
-    escaped_mfa = Macro.escape(mfa)
     quote do
       unquote(time_var_not_hygienic) = :os.system_time(:microsecond)
       try do
         unquote(new_function_body)
       rescue
         error ->
-          Kernel.apply(unquote(error_module), unquote(error_func), [unquote(escaped_mfa), error, unquote(time_var_not_hygienic)])
+          Kernel.apply(unquote(error_module), unquote(error_func), [unquote(escaped_mfargs), error, unquote(time_var_not_hygienic)])
           reraise(error, __STACKTRACE__)
       end
     end
