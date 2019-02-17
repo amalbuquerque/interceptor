@@ -15,7 +15,7 @@ defmodule InterceptorOnAfterOwnConfigurationTest do
 
       assert length(callback_calls) == 1
       assert result == callback_result
-      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration1, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration1, :to_intercept, []}
     end
   end
 
@@ -31,7 +31,7 @@ defmodule InterceptorOnAfterOwnConfigurationTest do
 
       assert length(callback_calls) == 1
       assert result == callback_result
-      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration2, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration2, :to_intercept, []}
     end
   end
 
@@ -47,7 +47,7 @@ defmodule InterceptorOnAfterOwnConfigurationTest do
 
       assert length(callback_calls) == 1
       assert result == callback_result
-      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration3, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration3, :to_intercept, []}
     end
   end
 
@@ -63,7 +63,7 @@ defmodule InterceptorOnAfterOwnConfigurationTest do
 
       assert length(callback_calls) == 1
       assert result == callback_result
-      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration4, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnAfterOwnConfiguration4, :to_intercept, []}
     end
   end
 

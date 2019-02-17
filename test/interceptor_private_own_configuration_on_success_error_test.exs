@@ -22,7 +22,7 @@ defmodule InterceptorPrivateOwnConfigurationOnSuccessErrorTest do
       time_it_took_microseconds = intercepted_timestamp - started_at_timestamp
       assert time_it_took_microseconds > 500_000
 
-      assert intercepted_mfa == {InterceptedPrivateOnSuccessOnErrorOwnConfiguration, :square_plus_10, 1}
+      assert intercepted_mfa == {InterceptedPrivateOnSuccessOnErrorOwnConfiguration, :square_plus_10, [3]}
     end
 
     test "it intercepts the private function after it raises an error" do
@@ -47,7 +47,7 @@ defmodule InterceptorPrivateOwnConfigurationOnSuccessErrorTest do
       time_it_took_microseconds = intercepted_timestamp - started_at_timestamp
       assert time_it_took_microseconds > 600_000
 
-      assert intercepted_mfa == {InterceptedPrivateOnSuccessOnErrorOwnConfiguration, :divide_by_0, 1}
+      assert intercepted_mfa == {InterceptedPrivateOnSuccessOnErrorOwnConfiguration, :divide_by_0, [42]}
     end
   end
 

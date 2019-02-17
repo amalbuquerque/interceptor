@@ -358,26 +358,26 @@ defmodule Interceptor do
     end
   end
 
-  defp set_lambda_wrapper(function_body, mfa) do
-    wrapper_function = get_interceptor_module_function_for(mfa, :wrapper)
+  defp set_lambda_wrapper(function_body, mfargs) do
+    wrapper_function = get_interceptor_module_function_for(mfargs, :wrapper)
 
     wrapper_only_callback? = [
       :before,
       :after,
       :on_success,
       :on_failure
-    ] |> Enum.all?(&is_nil(get_interceptor_module_function_for(mfa, &1)))
+    ] |> Enum.all?(&is_nil(get_interceptor_module_function_for(mfargs, &1)))
 
-    set_lambda_wrapper_in_place(function_body, mfa, wrapper_function, wrapper_only_callback?)
+    set_lambda_wrapper_in_place(function_body, mfargs, wrapper_function, wrapper_only_callback?)
   end
 
-  defp set_lambda_wrapper_in_place(function_body, _mfa, nil, _wrapper_only_callback?), do: function_body
+  defp set_lambda_wrapper_in_place(function_body, _mfargs, nil, _wrapper_only_callback?), do: function_body
 
-  defp set_lambda_wrapper_in_place(_function_body, mfa, _wrapper_function, false),
-    do: raise "Wrapper needs to be the only callback configured. You configured another callback besides `wrapper` for the following function: #{inspect(mfa)}."
+  defp set_lambda_wrapper_in_place(_function_body, mfargs, _wrapper_function, false),
+    do: raise "Wrapper needs to be the only callback configured. You configured another callback besides `wrapper` for the following function: #{inspect(mfargs)}."
 
-  defp set_lambda_wrapper_in_place(function_body, mfa, wrapper_function, true),
-    do: wrap_block_in_lambda(function_body, mfa, wrapper_function)
+  defp set_lambda_wrapper_in_place(function_body, mfargs, wrapper_function, true),
+    do: wrap_block_in_lambda(function_body, mfargs, wrapper_function)
 
   defp set_on_success_error_callback(function_body, mfargs) do
     success_callback = get_interceptor_module_function_for(mfargs, :on_success)
@@ -451,9 +451,9 @@ defmodule Interceptor do
   end
 
   defp wrap_block_in_lambda(function_body,
-    {_module, _func, _arity} = mfa,
+    {_module, _func, _args} = mfargs,
     {wrapper_module, wrapper_func, @wrapper_callback_arity}) do
-    escaped_mfa = Macro.escape(mfa)
+    escaped_mfargs = escape_module_function_but_not_args(mfargs)
     lambda_wrapped = quote do
       fn ->
         unquote(function_body)
@@ -461,7 +461,7 @@ defmodule Interceptor do
     end
 
     quote do
-      Kernel.apply(unquote(wrapper_module), unquote(wrapper_func), [unquote(escaped_mfa), unquote(lambda_wrapped)])
+      Kernel.apply(unquote(wrapper_module), unquote(wrapper_func), [unquote(escaped_mfargs), unquote(lambda_wrapped)])
     end
   end
 
