@@ -397,18 +397,18 @@ defmodule Interceptor do
   defp set_on_success_error_callback_in_place(function_body, mfa, success_callback, error_callback),
     do: wrap_do_in_try_catch(function_body, mfa, success_callback, error_callback)
 
-  defp set_after_callback(function_body, mfa) do
-    interceptor_callback = get_interceptor_module_function_for(mfa, :after)
+  defp set_after_callback(function_body, mfargs) do
+    interceptor_callback = get_interceptor_module_function_for(mfargs, :after)
 
     set_after_callback_in_place(
-        function_body, mfa, interceptor_callback)
+        function_body, mfargs, interceptor_callback)
   end
 
   defp set_after_callback_in_place(
-    function_body, _mfa, nil = _interceptor_callback), do: function_body
+    function_body, _mfargs, nil = _interceptor_callback), do: function_body
 
   defp set_after_callback_in_place(
-    function_body, {module, _function, _arguments} = mfa,
+    function_body, {module, _function, _arguments} = mfargs,
     {interceptor_module, interceptor_function, @after_callback_arity}) do
 
     {result_var_name, result_var_not_hygienic} = random_quoted_not_higienic_var(module)
@@ -416,10 +416,10 @@ defmodule Interceptor do
     after_quoted_call = quote bind_quoted: [
       interceptor_module: interceptor_module,
       interceptor_function: interceptor_function,
-      mfa: Macro.escape(mfa),
+      mfargs: escape_module_function_but_not_args(mfargs),
       result_var: result_var_not_hygienic
     ] do
-      Kernel.apply(interceptor_module, interceptor_function, [mfa, result_var])
+      Kernel.apply(interceptor_module, interceptor_function, [mfargs, result_var])
     end
 
     append_to_function_body(function_body, after_quoted_call, result_var_name)
