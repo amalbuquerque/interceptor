@@ -34,11 +34,48 @@ defmodule Interceptor.FunctionArguments do
   the argument list in AST form as if the
   the function was defined like `def foo(x, y, {bar} = a1b2c3d), do: 42`.
   """
+  # functions with no arguments have nil as their `args_list`
+  def get_args_names_and_new_args_list({_function_name, _metadata, nil} = _function_hdr, _module), do: {[], nil}
+
   def get_args_names_and_new_args_list(
     {_function_name, _metadata, args_list} = _function_hdr, module) do
       args_list
       |> Enum.map(&get_arg_name_and_its_ast(&1, module))
       |> Enum.unzip()
+  end
+
+  def get_function_header_with_new_args_names(
+    {function_name, metadata, _args_list} = function_hdr, module) do
+    {args_names, new_args_list} = get_args_names_and_new_args_list(function_hdr, module)
+
+    new_function_header = {function_name, metadata, new_args_list}
+    {new_function_header, args_names}
+  end
+
+  # TODO: receive the current module and pass it as context
+  def get_not_hygienic_args_values_ast(nil), do: []
+
+  def get_not_hygienic_args_values_ast(args_names) do
+    args_names
+    |> Enum.map(fn arg_name ->
+      quote do: var!(unquote(Macro.var(arg_name, nil)))
+    end)
+  end
+
+  # previously we were using Macro.escape for the mfa (arity),
+  # but we now want the args values not to be quoted,
+  # because they are already quoted
+  def escape_module_function_but_not_args({module, function, args})
+  when is_atom(module) and is_atom(function) and is_list(args) do
+    {
+      :{},
+      [],
+      [
+        module,
+        function,
+        args
+      ]
+    }
   end
 
   defp get_arg_name_and_its_ast({:=, _, [_operand_a, _operand_b] = assignment_operands} = arg_full_ast, _module) do
