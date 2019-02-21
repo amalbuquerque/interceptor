@@ -18,6 +18,7 @@ defmodule InterceptConfig do
   {InterceptedOnSuccess2, :to_intercept, 0} => [on_success: {OnSuccess.Callback, :on_success, 3}],
   {InterceptedOnSuccess2, :other_to_intercept, 0} => [on_success: {OnSuccess.Callback, :on_success, 3}],
   {InterceptedOnSuccess3, :other_to_intercept, 1} => [on_success: {OnSuccess.Callback, :on_success, 3}],
+  {InterceptedOnSuccess3, :trickier_args_function, 6} => [on_success: {OnSuccess.Callback, :on_success, 3}],
 
   # on error tests
   {InterceptedOnError1, :to_intercept, 0} => [on_error: {OnError.Callback, :on_error, 3}],
