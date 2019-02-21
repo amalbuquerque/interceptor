@@ -1,5 +1,5 @@
 defmodule OnSuccess.Callback do
-  def on_success({_module, _function, _arity} = mfa, result, started_at) do
+  def on_success({_module, _function, _args} = mfa, result, started_at) do
     Agent.update(:on_success_test_process,
       fn messages ->
         [{started_at, Interceptor.Utils.timestamp(), result, mfa} | messages]
