@@ -330,7 +330,7 @@ defmodule Interceptor do
   end
 
   defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
-    {new_function_hdr, args_names} = get_function_header_with_new_args_names(function_hdr, current_module)
+    {new_function_hdr, args_names} = get_function_header_with_new_args_names(function_hdr)
     mfargs = get_mfargs(current_module, function_hdr, args_names)
 
 
@@ -353,7 +353,7 @@ defmodule Interceptor do
     case debug_mode?() do
       true ->
         IO.puts("############# Function AST after interceptor ###")
-        IO.inspect(function_body)
+        IO.inspect(function_body, limit: :infinity)
       _ -> function_body
     end
   end

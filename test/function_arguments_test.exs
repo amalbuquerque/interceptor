@@ -5,14 +5,14 @@ defmodule FunctionArgumentsTest do
   describe "gets each argument name and the corresponding value (in AST form)" do
     test "it handles no arguments" do
       function_header = get_function_header("def abc(), do: 123")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       assert {[], []} == result
     end
 
     test "it handles simple arguments" do
       function_header = get_function_header("def abc(x, y, z), do: x+y+z")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -29,7 +29,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles tuple destructure" do
       function_header = get_function_header("def abc({x, y, z}), do: x+y+z")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -47,7 +47,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles binary destructure" do
       function_header = get_function_header("def abc(<<x, y, z>>), do: [x,y,z]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -65,7 +65,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles map destructure" do
       function_header = get_function_header("def abc(%{a: x, b: y, c: z}), do: [x,y,z]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -83,7 +83,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles keyword list destructure" do
       function_header = get_function_header("def abc([a: x, b: y, c: z]), do: [x,y,z]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -101,7 +101,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles list destructure (one element)" do
       function_header = get_function_header("def abc([x]), do: [x]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -119,7 +119,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles list destructure (more than one element)" do
       function_header = get_function_header("def abc([x,y,z]), do: [x,y,z]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -137,7 +137,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles existing assignments (variable first)" do
       function_header = get_function_header("def abc(a = {bar}), do: [a, bar]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -151,7 +151,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles existing assignments (variable after)" do
       function_header = get_function_header("def abc({bar} = foo), do: [foo, bar]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -165,7 +165,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles default values (nil)" do
       function_header = get_function_header("def abc(foo \\\\ nil), do: [foo]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -179,7 +179,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles default values (123)" do
       function_header = get_function_header("def abc(bar \\\\ 123), do: [bar]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 
@@ -193,7 +193,7 @@ defmodule FunctionArgumentsTest do
 
     test "it handles default values (strings)" do
       function_header = get_function_header("def abc(baz \\\\ \"blabla\"), do: [baz]")
-      result = FunctionArguments.get_args_names_and_new_args_list(function_header, IrrelevantModule)
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
 
       {args_names, args_ast} = result
 

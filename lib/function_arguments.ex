@@ -35,18 +35,18 @@ defmodule Interceptor.FunctionArguments do
   the function was defined like `def foo(x, y, {bar} = a1b2c3d), do: 42`.
   """
   # functions with no arguments have nil as their `args_list`
-  def get_args_names_and_new_args_list({_function_name, _metadata, nil} = _function_hdr, _module), do: {[], nil}
+  def get_args_names_and_new_args_list({_function_name, _metadata, nil} = _function_hdr), do: {[], nil}
 
   def get_args_names_and_new_args_list(
-    {_function_name, _metadata, args_list} = _function_hdr, module) do
+    {_function_name, _metadata, args_list} = _function_hdr) do
       args_list
-      |> Enum.map(&get_arg_name_and_its_ast(&1, module))
+      |> Enum.map(&get_arg_name_and_its_ast(&1))
       |> Enum.unzip()
   end
 
   def get_function_header_with_new_args_names(
-    {function_name, metadata, _args_list} = function_hdr, module) do
-    {args_names, new_args_list} = get_args_names_and_new_args_list(function_hdr, module)
+    {function_name, metadata, _args_list} = function_hdr) do
+    {args_names, new_args_list} = get_args_names_and_new_args_list(function_hdr)
 
     new_function_header = {function_name, metadata, new_args_list}
     {new_function_header, args_names}
@@ -78,7 +78,7 @@ defmodule Interceptor.FunctionArguments do
     }
   end
 
-  defp get_arg_name_and_its_ast({:=, _, [_operand_a, _operand_b] = assignment_operands} = arg_full_ast, _module) do
+  defp get_arg_name_and_its_ast({:=, _, [_operand_a, _operand_b] = assignment_operands} = arg_full_ast) do
     arg_variable = assignment_operands
     |> Enum.filter(&is_variable(&1))
     |> hd()
@@ -88,7 +88,7 @@ defmodule Interceptor.FunctionArguments do
     {arg_name, arg_full_ast}
   end
 
-  defp get_arg_name_and_its_ast({:\\, _metadata, [arg_ast, _default_value_ast]} = arg_full_ast, _module) do
+  defp get_arg_name_and_its_ast({:\\, _metadata, [arg_ast, _default_value_ast]} = arg_full_ast) do
     {arg_name, _, _} = arg_ast
 
     {arg_name, arg_full_ast}
@@ -96,10 +96,12 @@ defmodule Interceptor.FunctionArguments do
 
   # in this case, `arg_ast` doesn't contain an assignment, so we are "manually"
   # placing it inside an assignment statement
-  defp get_arg_name_and_its_ast({arg_name, _metadata, _context} = arg_ast, module)
+  defp get_arg_name_and_its_ast({arg_name, _metadata, _context} = arg_ast)
     when arg_name in [:<<>>, :{}, :%{}] do
     random_name = Utils.random_atom()
-    random_variable = Macro.var(random_name, module)
+
+    # arg variables always have their context as nil
+    random_variable = Macro.var(random_name, nil)
 
     # if value_ast represents `{a,b,c}`, the
     # returned assignment (in AST form) will be like
@@ -109,14 +111,16 @@ defmodule Interceptor.FunctionArguments do
     {random_name, assignment_ast}
   end
 
-  defp get_arg_name_and_its_ast({arg_name, _metadata, _context} = arg_ast, _module)
+  defp get_arg_name_and_its_ast({arg_name, _metadata, _context} = arg_ast)
     when is_atom(arg_name) do
     {arg_name, arg_ast}
   end
 
-  defp get_arg_name_and_its_ast(arg_ast, module) when is_list(arg_ast) do
+  defp get_arg_name_and_its_ast(arg_ast) when is_list(arg_ast) or is_tuple(arg_ast) do
     random_name = Utils.random_atom()
-    random_variable = Macro.var(random_name, module)
+    #
+    # arg variables always have their context as nil
+    random_variable = Macro.var(random_name, nil)
 
     # if value_ast represents `[a,b,c]`, the
     # returned assignment (in AST form) will be like
