@@ -1,10 +1,13 @@
 defmodule Interceptor do
   @moduledoc """
   The Interceptor library allows you to intercept function calls, by configuring
-  the interception functions and using the `Interceptor.intercept/1` macro.
+  your interception functions and using the `Interceptor.intercept/1` macro.
 
   Create a module with a `get_intercept_config/0` function that returns the
   interception configuration map.
+
+  In the example below, the `Intercepted.abc/1` function will be intercepted
+  *before* it starts, *after* it ends, and when it concludes successfully or not:
 
   ```
   defmodule Interception.Config do
@@ -28,31 +31,30 @@ defmodule Interceptor do
       configuration: Interception.Config
   ```
 
-  Define your interceptor module:
+  Define the callback functions that will be called during the execution of your intercepted functions:
 
   ```
   defmodule MyInterceptor do
-    def intercept_before(mfa),
-      do: IO.puts "Intercepted \#\{inspect(mfa)\} before it started."
+    def intercept_before(mfargs),
+      do: IO.puts "Intercepted \#\{inspect(mfargs)\} before it started."
 
-    def intercept_after(mfa, result),
-      do: IO.puts "Intercepted \#\{inspect(mfa)\} after it completed. Its result: \#\{inspect(result)\}"
+    def intercept_after(mfargs, result),
+      do: IO.puts "Intercepted \#\{inspect(mfargs)\} after it completed. Its result: \#\{inspect(result)\}"
 
-    def intercept_on_success(mfa, result, _start_timestamp),
-      do: IO.puts "Intercepted \#\{inspect(mfa)\} after it completed successfully. Its result: \#\{inspect(result)\}"
+    def intercept_on_success(mfargs, result, _start_timestamp),
+      do: IO.puts "Intercepted \#\{inspect(mfargs)\} after it completed successfully. Its result: \#\{inspect(result)\}"
 
-    def intercept_on_error(mfa, error, _start_timestamp),
-      do: IO.puts "Intercepted \#\{inspect(mfa)\} after it raised an error. Here's the error: \#\{inspect(error)\}"
+    def intercept_on_error(mfargs, error, _start_timestamp),
+      do: IO.puts "Intercepted \#\{inspect(mfargs)\} after it raised an error. Here's the error: \#\{inspect(error)\}"
   end
   ```
 
-  In the module that you want to intercept (in our case, `Intercepted`), place the
-  functions that you want to intercept inside an `Interceptor.intercept/1` block.
+  Finally, wrap the functions to intercept with an `Interceptor.intercept/1` block
+  (`Interceptor.intercept/1` is actually a macro). Notice that if your functions
+  are placed outside of this block or if they don't have a corresponding interceptor
+  configuration, they won't be intercepted.
 
-  Notice that if your functions are placed out of this block or if they don't have a
-  corresponding interceptor configuration, they won't be intercepted. In the following
-  example, the `not_intercepted/3` function can't be intercepted because it isn't enclosed
-  in the `Interceptor.intercept/1` block.
+  This is how the `Intercepted` module using the `intercept/1` macro looks like:
 
   ```
   defmodule Intercepted do
@@ -62,43 +64,62 @@ defmodule Interceptor do
       def abc(x), do: "Got \#\{inspect(x)\}"
     end
 
+    # the following function can't be intercepted
+    # because it isn't enclosed in the `Interceptor.intercept/1` block
     def not_intercepted(f, g, h), do: f+g+h
   end
   ```
 
-  Now when you run your code, whenever the `Intercepted.abc/1` function is
-  called, it will be intercepted *before* it starts and *after* it completes.
+  In the previous example, we defined four callbacks:
 
-  In the previous example, we defined four callbacks: one `before` callback, that
-  will be called before the intercepted function starts; one `after` callback, that
-  will be called after the intercepted function completes. And we also defined the
-  `on_success` and `on_error` callbacks, that will be called when the
-  `Intercepted.abc/1` function completes successfully or raises any error,
-  respectively.
+  - a `before` callback, that will be called before the intercepted function starts;
+  - an `after` callback, that will be called after the intercepted function completes;
+  - an `on_success` callback, that will be called if the function completes successfully;
+  - an `on_error` callback, that will be called if the function raises any error.
+
+  Now when you run your code, whenever the `Intercepted.abc/1` function is
+  called, it will be intercepted *before* it starts, *after* it completes,
+  when it completes *successfully* or when it *raises* an error.
+
+  You can also intercept private functions in the exact same way you intercept
+  public functions. You just need to configure the callbacks that should be invoked for
+  the given private function, and the private function definition needs to be enclosed in
+  an `Interceptor.intercept/1` macro.
+
+  ### MFA passed to your callbacks
+
+  Every function callback that you define will receive as its first argument a "MFArgs"
+  tuple, i.e., `{intercepted_module, intercepted_function, intercepted_args}`.
+  The `intercepted_args` is a list of arguments passed to your intercepted function.
+  Even if your intercepted function only receives a single argument, `intercepted_args`
+  will still be a list with a single element.
+
+  *Pro-tip*: Since your callback function receives the arguments that the intercepted
+  function received, you can pattern match on the argument values function. ⚠️  Just
+  have in mind that if your `intercepted_args` don't pattern match the values your
+  callback function expects, you'll get an error every time your callback function
+  does its thing and intercepts the function.
+
+  ### Wrapper callback (aka build your custom callback)
 
   If none of the previous callbacks suits your needs, you can use the `wrapper`
   callback. This way, the intercepted function will be wrapped in a lambda and
   passed to your callback function.
 
-  _Note:_ When you use a `wrapper` callback, you can't use any other callback,
+  When you use a `wrapper` callback, you can't use any other callback,
   i.e., the `before`, `after`, `on_success` and `on_error` callbacks can't be
   used for a function that is already being intercepted by a `wrapper` callback.
   If you try so, an exception in compile-time will be raised.
 
-  _Note 2:_ When you use the `wrapper` callback, it's the responsibility of the
+  When you use the `wrapper` callback, it's the responsibility of the
   callback function to invoke the lambda and return the result. If you don't
   return the result from your callback, the return value of the intercepted
   function will be whatever value your `wrapper` callback function returns.
 
-  _Note 3:_ You can intercept private functions in exactly the same way you intercept
-  public functions. You just need to configure the callbacks that should be invoked for
-  the given private function, and the private function definition needs to be enclosed in
-  an `Interceptor.intercept/1` macro.
-
   ## Possible callbacks
 
   * `before` - The callback function that you use to intercept your function
-  will be passed the MFA (`{intercepted_module, intercepted_function,
+  will be passed the MFArgs (`{intercepted_module, intercepted_function,
   intercepted_args}`) of the intercepted function, hence it needs to receive
   *one* argument. E.g.:
 
@@ -111,7 +132,7 @@ defmodule Interceptor do
   ```
 
   * `after` - The callback function that you use to intercept your function
-  will be passed the MFA (`{intercepted_module, intercepted_function,
+  will be passed the MFArgs (`{intercepted_module, intercepted_function,
   intercepted_args}`) of the intercepted function and its result, hence it needs
   to receive *two* arguments. E.g.:
 
@@ -124,7 +145,7 @@ defmodule Interceptor do
   ```
 
   * `on_success` - The callback function that you use to intercept your function
-  on success will be passed the MFA (`{intercepted_module, intercepted_function,
+  on success will be passed the MFArgs (`{intercepted_module, intercepted_function,
   intercepted_args}`) of the intercepted function, its success result and the
   start timestamp (in microseconds, obtained with
   `:os.system_time(:microsecond)`), hence it needs to receive *three* arguments.
@@ -140,7 +161,7 @@ defmodule Interceptor do
   ```
 
   * `on_error` - The callback function that you use to intercept your function
-  on error will be passed the MFA (`{intercepted_module, intercepted_function,
+  on error will be passed the MFArgs (`{intercepted_module, intercepted_function,
   intercepted_args}`) of the intercepted function, the raised error and the
   start timestamp (in microseconds, obtained with
   `:os.system_time(:microsecond)`), hence it needs to receive *three* arguments.
@@ -156,9 +177,9 @@ defmodule Interceptor do
   ```
 
   * `wrapper` - The callback function that you use to intercept your function
-  will be passed the MFA (`{intercepted_module, intercepted_function,
+  will be passed the MFArgs (`{intercepted_module, intercepted_function,
   intercepted_args}`) of the intercepted function and its body wrapped in a
-  lambda, hence it needs to receive *two* argument. E.g.:
+  lambda, hence it needs to receive *two* arguments. E.g.:
 
   ```
   defmodule WrapperInterceptor do
@@ -174,13 +195,13 @@ defmodule Interceptor do
 
   ## Streamlined configuration
 
-  If you think defining a `get_intercept_config/0` function on the configuration module or
-  using the `{module, function, arity}` format is too verbose, you can use the
-  `Interceptor.Configurator` that will allow you to use its `intercept/2` macro and the
-  `"Module.function/arity"` streamlined format.
+  If you think that defining a `get_intercept_config/0` function on the configuration
+  module or using the `{module, function, arity}` format is too verbose, you can use the
+  `Interceptor.Configurator` module that will allow you to use its `intercept/2` macro
+  and the `"Module.function/arity"` streamlined format.
 
   Using the `Configurator` and the new streamlined format, the previous configuration
-  would become:
+  for the `Intercepted.abc/1` function would become:
 
   ```
   defmodule Interception.Config do
@@ -200,10 +221,10 @@ defmodule Interceptor do
   end
   ```
 
-  The `Configurator` is defining the needed `get_intercept_config/0` for you, and
-  converting those string MFAs into tuple-based MFAs. If you want to intercept another
+  The `Configurator` module is defining the needed `get_intercept_config/0` function for you,
+  and converting those string MFAs into tuple-based MFAs. If you want to intercept another
   function, it's just a matter of adding other `intercept
-  "OtherModule.another_function/2", ...` entry.
+  "OtherModule.another_function/2", ...` entry, exactly as we did.
 
   ## Intercept configuration on the intercepted module
 
@@ -224,11 +245,12 @@ defmodule Interceptor do
   end
   ```
 
-  Note: If the configuration you set on the intercepted module overlaps with a
+  _Note1:_ If the configuration you set on the intercepted module overlaps with a
   configuration set on the application configuration file, the former will take
   precedence, i.e., if both the intercepted module configuration and the application
-  configuration set the rules to intercept the `Intercepted.abc/1` function, the former
-  will prevail, overriding the latter.
+  configuration set the rules to intercept the `Intercepted.abc/1` function, the
+  rules set on the intercepted module will prevail, overriding the rules set on
+  the application configuration file.
 
   Instead of pointing to the intercept configuration module, you may also pass the
   intercept configuration directly via the `config` keyword. E.g:
@@ -332,7 +354,6 @@ defmodule Interceptor do
   defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
     {new_function_hdr, args_names} = get_function_header_with_new_args_names(function_hdr)
     mfargs = get_mfargs(current_module, function_hdr, args_names)
-
 
     new_function_body = function_body
     |> set_before_callback(mfargs)
