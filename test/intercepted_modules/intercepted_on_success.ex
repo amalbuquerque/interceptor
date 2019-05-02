@@ -1,5 +1,5 @@
 defmodule OnSuccess.Callback do
-  def on_success({_module, _function, _arity} = mfa, result, started_at) do
+  def on_success({_module, _function, _args} = mfa, result, started_at) do
     Agent.update(:on_success_test_process,
       fn messages ->
         [{started_at, Interceptor.Utils.timestamp(), result, mfa} | messages]
@@ -37,5 +37,21 @@ defmodule InterceptedOnSuccess3 do
     def other_to_intercept(w), do: w + private_function(1, 2, 3)
 
     defp private_function(x, y, z), do: x+y+z
+
+    def trickier_args_function(first_arg, [one, two, three], {abc, xyz}, %{baz: woz}, <<g,h,i>>, foo \\ "bar") do
+      [
+        first_arg,
+        one,
+        two,
+        three,
+        abc,
+        xyz,
+        woz,
+        g,
+        h,
+        i,
+        foo
+      ]
+    end
   end
 end

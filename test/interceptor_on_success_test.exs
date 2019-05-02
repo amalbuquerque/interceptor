@@ -21,7 +21,7 @@ defmodule InterceptorOnSuccessTest do
       assert length(callback_calls) == 1
       assert result == intercepted_result
 
-      assert intercepted_mfa == {InterceptedOnSuccess1, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnSuccess1, :to_intercept, []}
     end
   end
 
@@ -48,7 +48,7 @@ defmodule InterceptorOnSuccessTest do
       time_it_took_microseconds = intercepted_timestamp - started_at_timestamp
       assert 200_000 < time_it_took_microseconds
       assert result == intercepted_result
-      assert intercepted_mfa == {InterceptedOnSuccess2, :to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnSuccess2, :to_intercept, []}
     end
 
     test "it also intercepts the other function" do
@@ -67,7 +67,7 @@ defmodule InterceptorOnSuccessTest do
 
       assert length(callback_calls) == 1
       assert result == "HELLO"
-      assert intercepted_mfa == {InterceptedOnSuccess2, :other_to_intercept, 0}
+      assert intercepted_mfa == {InterceptedOnSuccess2, :other_to_intercept, []}
     end
   end
 
@@ -88,7 +88,7 @@ defmodule InterceptorOnSuccessTest do
 
       assert length(callback_calls) == 1
       assert result == 10
-      assert intercepted_mfa == {InterceptedOnSuccess3, :other_to_intercept, 1}
+      assert intercepted_mfa == {InterceptedOnSuccess3, :other_to_intercept, [4]}
     end
 
     test "it doesn't intercept the function that isn't configured" do
@@ -111,7 +111,101 @@ defmodule InterceptorOnSuccessTest do
 
       assert length(callback_calls) == 0
     end
+
+    test "it intercepts the function with 'anonymous' arguments, using the default argument" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnSuccess3.trickier_args_function(
+        :a,
+        [:b, :c, :d],
+        {:e, :f},
+        %{baz: :g},
+        "xyz")
+
+      callback_calls = get_agent_messages()
+
+      [{
+        _started_at_timestamp,
+        _intercepted_timestamp,
+        _intercepted_result,
+        intercepted_mfa
+      }] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == [
+        :a,
+        :b,
+        :c,
+        :d,
+        :e,
+        :f,
+        :g,
+        120, # 'x'
+        121, # 'y'
+        122, # 'z'
+        "bar"
+      ]
+
+      expected_arguments = [
+        :a,
+        [:b, :c, :d],
+        {:e, :f},
+        %{baz: :g},
+        "xyz",
+        "bar"
+      ]
+
+      assert intercepted_mfa == {InterceptedOnSuccess3, :trickier_args_function, expected_arguments}
+    end
+
+    test "it intercepts the function with 'anonymous' arguments, and doesn't use a default argument" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnSuccess3.trickier_args_function(
+        :a,
+        [:b, :c, :d],
+        {:e, :f},
+        %{baz: :g},
+        "xyz",
+        "not_default")
+
+      callback_calls = get_agent_messages()
+
+      [{
+        _started_at_timestamp,
+        _intercepted_timestamp,
+        _intercepted_result,
+        intercepted_mfa
+      }] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == [
+        :a,
+        :b,
+        :c,
+        :d,
+        :e,
+        :f,
+        :g,
+        120, # 'x'
+        121, # 'y'
+        122, # 'z'
+        "not_default"
+      ]
+
+      expected_arguments = [
+        :a,
+        [:b, :c, :d],
+        {:e, :f},
+        %{baz: :g},
+        "xyz",
+        "not_default"
+      ]
+
+      assert intercepted_mfa == {InterceptedOnSuccess3, :trickier_args_function, expected_arguments}
+    end
   end
+
 
   defp spawn_agent() do
     @process_name

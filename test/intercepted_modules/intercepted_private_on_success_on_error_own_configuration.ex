@@ -1,5 +1,5 @@
 defmodule OwnCallbacks do
-  def on_success({_module, _function, _arity} = mfa, result, started_at) do
+  def on_success({_module, _function, _args} = mfa, result, started_at) do
     Agent.update(:private_on_success_test_process,
       fn messages ->
         [{started_at, Interceptor.Utils.timestamp(), result, mfa} | messages]
@@ -7,7 +7,7 @@ defmodule OwnCallbacks do
     "Yo, I don't influence anything"
   end
 
-  def on_error({_module, _function, _arity} = mfa, error, started_at) do
+  def on_error({_module, _function, _args} = mfa, error, started_at) do
     Agent.update(:private_on_error_test_process,
       fn messages ->
         [{started_at, Interceptor.Utils.timestamp(), error, mfa} | messages]

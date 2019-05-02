@@ -1,5 +1,5 @@
 defmodule After.OwnCallback do
-  def right_after({_module, _function, _arity} = mfa, result) do
+  def right_after({_module, _function, _args} = mfa, result) do
     Agent.update(:after_test_process,
       fn messages ->
         [{:callback_overridden, result, mfa} | messages]
