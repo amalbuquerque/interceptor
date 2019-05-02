@@ -1,3 +1,10 @@
+# Changelog for v0.3.0
+
+## Changes
+
+* Instead of passing the intercepted function arity to the callback functions, we now pass the actual argument values.
+This change allows to have the same interceptor function behaving differently with different arguments values.
+
 # Changelog for v0.2.0
 
 ## Changes

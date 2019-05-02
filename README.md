@@ -12,7 +12,7 @@ dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:interceptor, "~> 0.2.0"}
+    {:interceptor, "~> 0.3.0"}
   ]
 end
 ```
