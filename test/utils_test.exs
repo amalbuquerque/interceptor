@@ -1,4 +1,4 @@
-defmodule InterceptorUtilsTest do
+defmodule Interceptor.UtilsTest do
   use ExUnit.Case
 
   @subject Interceptor.Utils

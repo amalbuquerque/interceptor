@@ -24,10 +24,11 @@ defmodule Interceptor.MixProject do
   defp deps do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
+      {:mox, "0.5.1", only: :test},
     ]
   end
 
-  defp elixirc_paths(:test), do: ["lib", "test/intercepted_modules"]
+  defp elixirc_paths(:test), do: ["test/support", "lib", "test/intercepted_modules"]
   defp elixirc_paths(_), do: ["lib"]
 
   defp docs() do
