@@ -2,7 +2,7 @@ defmodule Interceptor.Configuration.Validator do
   alias Interceptor.Utils
   alias Interceptor.Configuration
 
-  @config_searcher Application.get_env(:interceptor, :config_searcher)
+  @config_searcher Application.get_env(:interceptor, :config_searcher) || Interceptor.Configuration.Searcher
 
   def check_if_intercepted_functions_exist(),
     do: _check_if_intercepted_functions_exist(Configuration.debug_mode?())
