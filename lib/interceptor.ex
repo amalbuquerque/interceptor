@@ -316,21 +316,21 @@ defmodule Interceptor do
   ```
   """
   defmacro intercept([do: do_block_body]) do
-    updated_do_block = _intercept(__CALLER__.module, do_block_body)
+    updated_do_block = intercept_it(__CALLER__.module, do_block_body)
 
     [do: updated_do_block]
   end
 
-  defp _intercept(caller, {:def, _metadata, _function_hdr_body} = function_def),
-    do: _intercept(caller, {:__block__, [], [function_def]})
+  def intercept_it(caller, {:def, _metadata, _function_hdr_body} = function_def),
+    do: intercept_it(caller, {:__block__, [], [function_def]})
 
-  defp _intercept(caller, {:__block__, _metadata, definitions} = do_block) do
+  def intercept_it(caller, {:__block__, _metadata, definitions} = do_block) do
     definitions
     |> Enum.map(&(add_calls(&1, caller)))
     |> update_block_definitions(do_block)
   end
 
-  defp _intercept(_caller, something_else), do: something_else
+  def intercept_it(_caller, something_else), do: something_else
 
   defp get_mfa(current_module, function_header) do
     {function, _context, args} = function_header
