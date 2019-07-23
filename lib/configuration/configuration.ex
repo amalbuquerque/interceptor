@@ -26,8 +26,13 @@ defmodule Interceptor.Configuration do
 
   def get_global_configuration() do
     Application.get_env(:interceptor, :configuration)
-    |> config_module_exists?()
-    |> get_configuration_from_module()
+    |> case do
+      config when is_map(config) -> config
+      config_module ->
+        config_module
+        |> config_module_exists?()
+        |> get_configuration_from_module()
+    end
   end
 
   def get_configuration(module) do
@@ -39,7 +44,7 @@ defmodule Interceptor.Configuration do
 
   defp get_own_configuration(module) do
     case Module.get_attribute(module, :own_config) do
-      %{} = config ->
+      config when is_map(config) ->
         Configurator.transform_streamlined_config_to_tuple_config(config)
       module ->
         module
