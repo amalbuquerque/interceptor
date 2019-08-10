@@ -332,6 +332,10 @@ defmodule Interceptor do
 
   def intercept_it(_caller, something_else), do: something_else
 
+  defp get_mfa(current_module, {:when, _context, [function_header | _guard_clauses]}) do
+    get_mfa(current_module, function_header)
+  end
+
   defp get_mfa(current_module, function_header) do
     {function, _context, args} = function_header
 

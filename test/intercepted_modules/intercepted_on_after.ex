@@ -37,3 +37,12 @@ defmodule InterceptedOnAfter3 do
     defp private_function(x, y, z), do: x+y+z
   end
 end
+
+defmodule InterceptedOnAfter4 do
+  require Interceptor, as: I
+
+  I.intercept do
+    def to_intercept_guarded(arg) when is_atom(arg), do: "ATOM #{arg}"
+    def to_intercept_guarded(arg), do: "SOMETHING ELSE #{arg}"
+  end
+end
