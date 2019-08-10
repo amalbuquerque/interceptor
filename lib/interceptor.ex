@@ -351,7 +351,7 @@ defmodule Interceptor do
     {current_module, current_function, args_values}
   end
 
-  defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
+  def add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
     {new_function_hdr, args_names} = get_function_header_with_new_args_names(function_hdr)
     mfargs = get_mfargs(current_module, function_hdr, args_names)
 
@@ -366,7 +366,7 @@ defmodule Interceptor do
     |> return_function_body()
   end
 
-  defp add_calls(something_else, _current_module) do
+  def add_calls(something_else, _current_module) do
     something_else
   end
 

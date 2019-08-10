@@ -49,6 +49,14 @@ defmodule Interceptor.Utils do
     function_exists?
   end
 
+  def debug_message(message) do
+    case Configuration.debug_mode? do
+      true ->
+        IO.puts(message)
+      _ -> :nop
+    end
+  end
+
   defp mfa_from_string(string_module, string_function, string_arity) do
     module = String.to_atom("Elixir.#{string_module}")
 
