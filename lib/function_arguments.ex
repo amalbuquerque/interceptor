@@ -45,6 +45,20 @@ defmodule Interceptor.FunctionArguments do
   end
 
   def get_function_header_with_new_args_names(
+    {:when, guard_metadata, [
+      {function_name, metadata, _args_list} = function_hdr | guard_clauses
+    ]}) do
+
+    {args_names, new_args_list} = get_args_names_and_new_args_list(function_hdr)
+
+    new_function_header = {:when, guard_metadata, [
+      {function_name, metadata, new_args_list} | guard_clauses
+    ]}
+
+    {new_function_header, args_names}
+  end
+
+  def get_function_header_with_new_args_names(
     {function_name, metadata, _args_list} = function_hdr) do
     {args_names, new_args_list} = get_args_names_and_new_args_list(function_hdr)
 

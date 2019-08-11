@@ -12,7 +12,7 @@ dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:interceptor, "~> 0.3.0"}
+    {:interceptor, "~> 0.4.0"}
   ]
 end
 ```
@@ -93,3 +93,8 @@ other alternative configuration approaches.
 You can find the library documentation at
 [https://hexdocs.pm/interceptor](https://hexdocs.pm/interceptor).
 
+## TODO
+
+- Update docs to mention how to understand if we're trying to intercept non-existing functions with the `Interceptor.Configuration.Validator` module;
+- Annotated.Interceptor tests;
+- Updating docs for the Annotated.Interceptor way.

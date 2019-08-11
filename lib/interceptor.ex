@@ -316,21 +316,25 @@ defmodule Interceptor do
   ```
   """
   defmacro intercept([do: do_block_body]) do
-    updated_do_block = _intercept(__CALLER__.module, do_block_body)
+    updated_do_block = intercept_it(__CALLER__.module, do_block_body)
 
     [do: updated_do_block]
   end
 
-  defp _intercept(caller, {:def, _metadata, _function_hdr_body} = function_def),
-    do: _intercept(caller, {:__block__, [], [function_def]})
+  def intercept_it(caller, {:def, _metadata, _function_hdr_body} = function_def),
+    do: intercept_it(caller, {:__block__, [], [function_def]})
 
-  defp _intercept(caller, {:__block__, _metadata, definitions} = do_block) do
+  def intercept_it(caller, {:__block__, _metadata, definitions} = do_block) do
     definitions
     |> Enum.map(&(add_calls(&1, caller)))
     |> update_block_definitions(do_block)
   end
 
-  defp _intercept(_caller, something_else), do: something_else
+  def intercept_it(_caller, something_else), do: something_else
+
+  defp get_mfa(current_module, {:when, _context, [function_header | _guard_clauses]}) do
+    get_mfa(current_module, function_header)
+  end
 
   defp get_mfa(current_module, function_header) do
     {function, _context, args} = function_header
@@ -351,7 +355,7 @@ defmodule Interceptor do
     {current_module, current_function, args_values}
   end
 
-  defp add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
+  def add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
     {new_function_hdr, args_names} = get_function_header_with_new_args_names(function_hdr)
     mfargs = get_mfargs(current_module, function_hdr, args_names)
 
@@ -366,7 +370,7 @@ defmodule Interceptor do
     |> return_function_body()
   end
 
-  defp add_calls(something_else, _current_module) do
+  def add_calls(something_else, _current_module) do
     something_else
   end
 

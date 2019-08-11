@@ -67,3 +67,35 @@ defmodule Foo do
     IO.puts("Hey xyz #{x}")
   end
 end
+
+defmodule Pig do
+  use Interceptor.Annotated
+
+  # @intercept true
+  # def hi_there, do: "ola"
+
+  # @intercept true
+  # def hi_there_big do
+  #   "ola big"
+  # end
+
+  @intercept true
+  def hi(arg_int) when is_integer(arg_int) and arg_int > 5 do
+    arg_int + 5
+  end
+
+  @intercept true
+  def hi(not_int) do
+    "hi NOT INT #{not_int}"
+  end
+
+  def no_intercept, do: "no intercept"
+
+  # def big_body_func(x, y, z) do
+  #   x+y+z
+  # end
+
+  # @zazaza :xxiiii
+  # @intercept true
+  # def hello, do: "Hiii #{@zazaza}"
+end

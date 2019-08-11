@@ -35,19 +35,25 @@ defmodule Interceptor.Utils do
     raise("Invalid MFA (#{inspect(not_an_mfa)}), it needs to be of the format '<Module>.<Function>/<Arity>' or {Module, :function, <arity>}.")
   end
 
+  def check_if_mfa_exists(module, function, arity) do
+    {ensure_result, _loaded_module} = Code.ensure_loaded(module)
+    loaded? = ensure_result == :module
+
+    exported? = function_exported?(module, function, arity)
+    function_exists? = loaded? && exported?
+
+    if Configuration.debug_mode?() && !function_exists? do
+      IO.puts("Warning! Invalid MFA (#{module}.#{function}/#{arity}), the given function doesn't exist. Module loaded? #{loaded?}, Function exported? #{exported?}")
+    end
+
+    function_exists?
+  end
+
   defp mfa_from_string(string_module, string_function, string_arity) do
     module = String.to_atom("Elixir.#{string_module}")
 
-    {ensure_result, _compiled_module} = Code.ensure_compiled(module)
-    compiled? = ensure_result == :module
-
     function = String.to_atom(string_function)
     arity = String.to_integer(string_arity)
-
-    function_exists? = compiled? && function_exported?(module, function, arity)
-    if Configuration.debug_mode?() && !function_exists? do
-      IO.puts("Warning! Invalid MFA (#{module}.#{function}/#{arity}), the given function doesn't exist.")
-    end
 
     {module, function, arity}
   end

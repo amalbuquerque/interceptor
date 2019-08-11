@@ -81,6 +81,38 @@ defmodule InterceptorOnAfterTest do
     end
   end
 
+  describe "module with two definitions of the same function, the first has a guard clause" do
+    test "it intercepts the guarded function" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfter4.to_intercept_guarded(:should_return_atom)
+
+      callback_calls = get_agent_messages()
+
+      [{_intercepted_timestamp, result_callback, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == result_callback
+      assert result == "ATOM should_return_atom"
+      assert intercepted_mfa == {InterceptedOnAfter4, :to_intercept_guarded, [:should_return_atom]}
+    end
+
+    test "it intercepts the function without guard" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfter4.to_intercept_guarded("boomerang")
+
+      callback_calls = get_agent_messages()
+
+      [{_intercepted_timestamp, result_callback, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == result_callback
+      assert result == "SOMETHING ELSE boomerang"
+      assert intercepted_mfa == {InterceptedOnAfter4, :to_intercept_guarded, ["boomerang"]}
+    end
+  end
+
   defp spawn_agent() do
     @process_name
     |> Process.whereis()
