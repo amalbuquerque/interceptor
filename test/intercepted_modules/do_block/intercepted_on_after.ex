@@ -46,3 +46,19 @@ defmodule InterceptedOnAfter4 do
     def to_intercept_guarded(arg), do: "SOMETHING ELSE #{arg}"
   end
 end
+
+defmodule InterceptedOnAfter5 do
+  require Interceptor, as: I
+
+  I.intercept do
+    def it_has_threes(3) do
+      "Has one three"
+    end
+
+    def it_has_threes(33), do: "Has two threes"
+
+    def something(%{abc: xyz}) do
+      "something #{xyz}"
+    end
+  end
+end
