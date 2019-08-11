@@ -29,6 +29,7 @@ defmodule Interceptor.MixProject do
   end
 
   defp elixirc_paths(:test), do: ["test/support", "lib", "test/intercepted_modules"]
+  defp elixirc_paths(:dev), do: ["lib", "test/intercepted_modules/minefield.ex"]
   defp elixirc_paths(_), do: ["lib"]
 
   defp docs() do
