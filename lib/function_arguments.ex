@@ -44,6 +44,14 @@ defmodule Interceptor.FunctionArguments do
       |> Enum.unzip()
   end
 
+  def get_actual_function_header(
+    {:when, _guard_metadata, [
+      {_function_name, _metadata, _args_list} = function_hdr | _guard_clauses
+    ]}), do: function_hdr
+
+  def get_actual_function_header(
+    {_function_name, _metadata, _args_list} = function_hdr), do: function_hdr
+
   def get_function_header_with_new_args_names(
     {:when, guard_metadata, [
       {function_name, metadata, _args_list} = function_hdr | guard_clauses

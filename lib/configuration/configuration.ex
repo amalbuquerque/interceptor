@@ -24,6 +24,18 @@ defmodule Interceptor.Configuration do
     configuration && Keyword.get(configuration, interception_type)
   end
 
+  def mfa_is_intercepted?({module, _function, _args} = mfa) do
+    [
+      get_interceptor_module_function_for(mfa, :before),
+      get_interceptor_module_function_for(mfa, :after),
+      get_interceptor_module_function_for(mfa, :on_success),
+      get_interceptor_module_function_for(mfa, :on_error),
+      get_interceptor_module_function_for(mfa, :wrapper)
+    ]
+    |> Enum.reduce(false,
+      fn intercept_config, acc -> acc || intercept_config != nil end)
+  end
+
   def get_global_configuration() do
     Application.get_env(:interceptor, :configuration)
     |> case do

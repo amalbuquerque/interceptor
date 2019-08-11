@@ -356,18 +356,27 @@ defmodule Interceptor do
   end
 
   def add_calls({type, _metadata, [function_hdr | [[do: function_body]]]} = function, current_module) when type in [:def, :defp] do
-    {new_function_hdr, args_names} = get_function_header_with_new_args_names(function_hdr)
-    mfargs = get_mfargs(current_module, function_hdr, args_names)
 
-    new_function_body = function_body
-    |> set_before_callback(mfargs)
-    |> set_after_callback(mfargs)
-    |> set_on_success_error_callback(mfargs)
-    |> set_lambda_wrapper(mfargs)
+    {function_name, _fun_metadata, args} = get_actual_function_header(function_hdr)
 
-    function
-    |> put_elem(2, [new_function_hdr | [[do: new_function_body]]])
-    |> return_function_body()
+    case mfa_is_intercepted?({current_module, function_name, args}) do
+      true ->
+        {new_function_hdr, args_names} = get_function_header_with_new_args_names(function_hdr)
+        mfargs = get_mfargs(current_module, function_hdr, args_names)
+
+        new_function_body = function_body
+        |> set_before_callback(mfargs)
+        |> set_after_callback(mfargs)
+        |> set_on_success_error_callback(mfargs)
+        |> set_lambda_wrapper(mfargs)
+
+        function
+        |> put_elem(2, [new_function_hdr | [[do: new_function_body]]])
+        |> return_function_body()
+
+      _ ->
+        function
+    end
   end
 
   def add_calls(something_else, _current_module) do
