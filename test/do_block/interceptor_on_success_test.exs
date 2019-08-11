@@ -206,6 +206,81 @@ defmodule InterceptorOnSuccessTest do
     end
   end
 
+  describe "module with functions that use structures" do
+    test "it intercepts the function with struct argument" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnSuccess4.with_struct(%La.Lu.Li.Weird.MyStruct{name: "andre", age: 32})
+
+      callback_calls = get_agent_messages()
+
+      [{
+        _started_at_timestamp,
+        _intercepted_timestamp,
+        _intercepted_result,
+        intercepted_mfa
+      }] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == ["andre", 32]
+
+      expected_arguments = [
+        %La.Lu.Li.Weird.MyStruct{name: "andre", age: 32}
+      ]
+
+      assert intercepted_mfa == {InterceptedOnSuccess4, :with_struct, expected_arguments}
+    end
+
+    test "it intercepts the function with structs arguments" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnSuccess4.with_structs(%La.Lu.Li.Weird.MyStruct{name: "andre", age: 32}, %La.Lu.Li.Weird.MyStruct{name: "brua", age: 23})
+
+      callback_calls = get_agent_messages()
+
+      [{
+        _started_at_timestamp,
+        _intercepted_timestamp,
+        _intercepted_result,
+        intercepted_mfa
+      }] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == ["andre", 32, "brua", 23]
+
+      expected_arguments = [
+        %La.Lu.Li.Weird.MyStruct{name: "andre", age: 32},
+        %La.Lu.Li.Weird.MyStruct{name: "brua", age: 23}
+      ]
+
+      assert intercepted_mfa == {InterceptedOnSuccess4, :with_structs, expected_arguments}
+    end
+
+    test "it intercepts the function with struct argument already assigned" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnSuccess4.with_struct_already_assigned(%La.Lu.Li.Weird.MyStruct{name: "andre", age: 32})
+
+      callback_calls = get_agent_messages()
+
+      [{
+        _started_at_timestamp,
+        _intercepted_timestamp,
+        _intercepted_result,
+        intercepted_mfa
+      }] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == ["andre", 32]
+
+      expected_arguments = [
+        %La.Lu.Li.Weird.MyStruct{name: "andre", age: 32}
+      ]
+
+      assert intercepted_mfa == {InterceptedOnSuccess4, :with_struct_already_assigned, expected_arguments}
+    end
+  end
+
 
   defp spawn_agent() do
     @process_name

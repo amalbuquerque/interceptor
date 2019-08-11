@@ -81,6 +81,24 @@ defmodule FunctionArgumentsTest do
       assert_ast_match(random_var_ast, expected_random_var_ast)
     end
 
+    test "it handles structure destructure" do
+      function_header = get_function_header("def abc(%Media{a: x, b: y, c: z}), do: [x,y,z]")
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
+
+      {args_names, args_ast} = result
+
+      assert length(args_names) == length(args_ast)
+      assert length(args_ast) == 1
+
+      [{:=, _metadata, [arg_ast, random_var_ast]}] = args_ast
+
+      expected_arg_ast = quote do: %Media{a: x, b: y, c: z}
+      expected_random_var_ast = Macro.var(hd(args_names), nil)
+
+      assert_ast_match(arg_ast, expected_arg_ast)
+      assert_ast_match(random_var_ast, expected_random_var_ast)
+    end
+
     test "it handles keyword list destructure" do
       function_header = get_function_header("def abc([a: x, b: y, c: z]), do: [x,y,z]")
       result = FunctionArguments.get_args_names_and_new_args_list(function_header)
