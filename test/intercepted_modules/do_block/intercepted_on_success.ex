@@ -55,3 +55,30 @@ defmodule InterceptedOnSuccess3 do
     end
   end
 end
+
+defmodule La.Lu.Li.Weird.MyStruct do
+  defstruct name: "ryuichi sakamoto", age: 67
+end
+
+
+defmodule InterceptedOnSuccess4 do
+  require Interceptor, as: I
+
+  alias La.Lu.Li.Weird.MyStruct
+
+  I.intercept do
+    def with_struct(%MyStruct{name: n, age: a}) do
+      [n, a]
+    end
+
+    def with_structs(
+      %MyStruct{name: n1, age: a1},
+      %La.Lu.Li.Weird.MyStruct{name: n2, age: a2}) do
+      [n1, a1, n2, a2]
+    end
+
+    def with_struct_already_assigned(%MyStruct{name: _n, age: _a} = xpto) do
+      [xpto.name, xpto.age]
+    end
+  end
+end
