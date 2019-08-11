@@ -113,6 +113,38 @@ defmodule InterceptorOnAfterTest do
     end
   end
 
+  describe "module with two definitions of the same function, both match on integers" do
+    test "it intercepts the first function definition" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfter5.it_has_threes(3)
+
+      callback_calls = get_agent_messages()
+
+      [{_intercepted_timestamp, result_callback, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == result_callback
+      assert result == "Has one three"
+      assert intercepted_mfa == {InterceptedOnAfter5, :it_has_threes, [3]}
+    end
+
+    test "it intercepts the second function definition" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfter5.it_has_threes(33)
+
+      callback_calls = get_agent_messages()
+
+      [{_intercepted_timestamp, result_callback, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == result_callback
+      assert result == "Has two threes"
+      assert intercepted_mfa == {InterceptedOnAfter5, :it_has_threes, [33]}
+    end
+  end
+
   defp spawn_agent() do
     @process_name
     |> Process.whereis()
