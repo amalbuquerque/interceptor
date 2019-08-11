@@ -14,6 +14,7 @@ defmodule InterceptConfig do
     {InterceptedOnAfter3, :other_to_intercept, 1} => [after: {After.Callback, :right_after, 2}],
     {InterceptedOnAfter4, :to_intercept_guarded, 1} => [after: {After.Callback, :right_after, 2}],
     {InterceptedOnAfter5, :it_has_threes, 1} => [after: {After.Callback, :right_after, 2}],
+    {InterceptedOnAfter5, :its_abc, 1} => [after: {After.Callback, :right_after, 2}],
 
     # on success tests
     {InterceptedOnSuccess1, :to_intercept, 0} => [on_success: {OnSuccess.Callback, :on_success, 3}],

@@ -57,6 +57,10 @@ defmodule InterceptedOnAfter5 do
 
     def it_has_threes(33), do: "Has two threes"
 
+    def its_abc("abc"), do: true
+
+    def its_abc(_else), do: false
+
     def something(%{abc: xyz}) do
       "something #{xyz}"
     end
