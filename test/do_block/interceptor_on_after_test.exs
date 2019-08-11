@@ -145,6 +145,38 @@ defmodule InterceptorOnAfterTest do
     end
   end
 
+  describe "module with two definitions of the same function, the first one match on `abc`" do
+    test "it intercepts the first function definition" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfter5.its_abc("abc")
+
+      callback_calls = get_agent_messages()
+
+      [{_intercepted_timestamp, result_callback, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == result_callback
+      assert result == true
+      assert intercepted_mfa == {InterceptedOnAfter5, :its_abc, ["abc"]}
+    end
+
+    test "it intercepts the second function definition" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedOnAfter5.its_abc(%{a: "map"})
+
+      callback_calls = get_agent_messages()
+
+      [{_intercepted_timestamp, result_callback, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == result_callback
+      assert result == false
+      assert intercepted_mfa == {InterceptedOnAfter5, :its_abc, [%{a: "map"}]}
+    end
+  end
+
   defp spawn_agent() do
     @process_name
     |> Process.whereis()
