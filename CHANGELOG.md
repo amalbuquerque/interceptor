@@ -1,3 +1,12 @@
+# Changelog for v0.4.0
+
+## Changes
+
+* Fix a bug where we weren't intercepting function definition with guard clauses;
+* Interceptor.Configuration.Validator allows one to check if the intercepted functions actually exist;
+* Organizing the existing test suite to cater for the "new" annotated tests;
+* New "annotated" way of intercepting functions (using `@intercept true`), instead of only supporting the `intercept/1` do-block. Still without the full test-suite, hence not recommended for now.
+
 # Changelog for v0.3.0
 
 ## Changes
