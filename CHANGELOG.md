@@ -1,3 +1,33 @@
+# Changelog for v0.4.1
+
+## Changes
+
+* Fix a bug where we weren't allowing arguments of an intercepted function to destructure existing structures (e.g `def foo(%Media{id: id}, x, y, z)`);
+
+## Known issues
+
+* If argument isn't used (e.g. `_arg`) by the original function, interceptor should pass the value `:not_used` to the callback function, instead of the actual `_arg` value. This will allow us to avoid the warning that currently happens (e.g. using a `_bla` variable);
+
+* Interceptor is inserting new variables when they aren't being used.
+
+Example:
+```
+I.intercept do
+  def query(conn, %{"task_id" => task_id}) do
+    ...
+  end
+end
+```
+
+Got these warnings:
+```
+warning: variable "xgz4fmsy7lu725zn636f" is unused (if the variable is not meant to be used, prefix it with an underscore)
+  lib/media_provider_web/controllers/tasks_controller.ex:13
+
+warning: variable "66wyvulxf2qxx6j4hxli" is unused (if the variable is not meant to be used, prefix it with an underscore)
+  lib/media_provider_web/controllers/tasks_controller.ex:13
+```
+
 # Changelog for v0.4.0
 
 ## Changes
