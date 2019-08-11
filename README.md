@@ -12,7 +12,7 @@ dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:interceptor, "~> 0.4.0"}
+    {:interceptor, "~> 0.4.1"}
   ]
 end
 ```
@@ -95,6 +95,6 @@ You can find the library documentation at
 
 ## TODO
 
-- Update docs to mention how to understand if we're trying to intercept non-existing functions with the `Interceptor.Configuration.Validator` module;
 - Annotated.Interceptor tests;
+- Update docs to mention how to understand if we're trying to intercept non-existing functions with the `Interceptor.Configuration.Validator` module;
 - Updating docs for the Annotated.Interceptor way.
