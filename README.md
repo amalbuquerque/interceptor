@@ -93,3 +93,7 @@ other alternative configuration approaches.
 You can find the library documentation at
 [https://hexdocs.pm/interceptor](https://hexdocs.pm/interceptor).
 
+## TODO
+
+- Annotated.Interceptor tests;
+- Updating docs for the Annotated.Interceptor way;
