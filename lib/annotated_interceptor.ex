@@ -1,6 +1,6 @@
 defmodule Interceptor.Annotated do
 
-  alias Interceptor.Utils
+  alias Interceptor.Debug
 
   @empty_metadata []
 
@@ -21,7 +21,7 @@ defmodule Interceptor.Annotated do
   end
 
   def on_definition(env, kind, fun, args, guards, body) do
-    Utils.debug_message(
+    Debug.debug_message(
       "\n\n[on_definition] current module=#{env.module}, got Env=(OMITTED), kind=#{inspect(kind)}, fun=#{
         inspect(fun)
       }, args=#{inspect(args)}, guards=#{inspect(guards)}, body=#{inspect(body)}"
@@ -29,7 +29,7 @@ defmodule Interceptor.Annotated do
 
     intercept_annotations = Module.get_attribute(env.module, :intercept)
 
-    Utils.debug_message("Intercept annotations #{inspect(intercept_annotations)}")
+    Debug.debug_message("Intercept annotations #{inspect(intercept_annotations)}")
 
     attrs = extract_attributes(env.module, body)
     intercepted = {kind, fun, args, guards, body, intercept_annotations, attrs}
@@ -46,7 +46,7 @@ defmodule Interceptor.Annotated do
       all_collected
       |> Enum.reduce("", fn intercepted, acc -> acc <> "#{inspect(intercepted)}\n" end)
 
-    Utils.debug_message("[before_compile] Everything we collected on the @intercepted attribute: #{to_print}")
+    Debug.debug_message("[before_compile] Everything we collected on the @intercepted attribute: #{to_print}")
 
     intercepted_functions = intercepted_functions(all_collected)
 
@@ -56,7 +56,7 @@ defmodule Interceptor.Annotated do
       to_intercept
       |> Enum.reduce("", fn intercepted, acc -> acc <> "#{inspect(intercepted)}\n" end)
 
-    Utils.debug_message(
+    Debug.debug_message(
       "[before_compile] I should now inject the intercepted functions on the #{env.module}. Here are the intercepted functions to inject: #{
         to_print
       }"
@@ -69,17 +69,6 @@ defmodule Interceptor.Annotated do
     end)
     |> elem(1)
     |> Enum.reverse()
-  end
-
-  defp debug_ast(ast) do
-    Utils.debug_message("############################## Will return the following:")
-
-    ast
-    |> Macro.to_string()
-    |> Utils.debug_message()
-
-    Utils.debug_message("############################## Will return the following AST")
-    IO.inspect(ast)
   end
 
   # Remove all defs which are not intercepted,
@@ -133,7 +122,7 @@ defmodule Interceptor.Annotated do
   defp decorate(
          env,
          # TODO: We currently ignore the intercepts value, it should be used to override the intercept configuration if passed
-         {kind, fun, args, _guard, body, _intercepts, attrs},
+         {kind, fun, args, guard, body, _intercepts, attrs},
          {prev_fun, all}
        ) do
 
@@ -151,10 +140,19 @@ defmodule Interceptor.Annotated do
         {:@, [], [{attr, [], [Macro.escape(value)]}]}
       end)
 
-    function_hdr_and_body = [
-      {fun, @empty_metadata, args},
-      body
-    ]
+     function_hdr_and_body = case guard do
+       [] -> [
+           {fun, @empty_metadata, args},
+           body
+       ]
+       [guard] -> [
+           {:when, @empty_metadata, [
+             {fun, @empty_metadata, args},
+             guard
+           ]},
+           body
+       ]
+     end
 
     def_clause = Interceptor.add_calls({kind, @empty_metadata, function_hdr_and_body}, env.module)
 
