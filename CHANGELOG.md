@@ -4,6 +4,12 @@
 
 * If argument isn't used (e.g. `_arg`) by the original function, interceptor should pass the value `:not_used` to the callback function, instead of the actual `_arg` value. This will allow us to avoid the warning that currently happens (e.g. using a `_bla` variable);
 
+# Changelog for v0.4.3
+
+## Changes
+
+* Address warning.
+
 # Changelog for v0.4.2
 
 ## Changes

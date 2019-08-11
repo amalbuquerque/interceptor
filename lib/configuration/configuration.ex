@@ -24,7 +24,7 @@ defmodule Interceptor.Configuration do
     configuration && Keyword.get(configuration, interception_type)
   end
 
-  def mfa_is_intercepted?({module, _function, _args} = mfa) do
+  def mfa_is_intercepted?({_module, _function, _args} = mfa) do
     [
       get_interceptor_module_function_for(mfa, :before),
       get_interceptor_module_function_for(mfa, :after),
