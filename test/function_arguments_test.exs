@@ -224,6 +224,43 @@ defmodule FunctionArgumentsTest do
     end
   end
 
+  describe "the function that returns the expression to pass the argument values to the callback function, `get_not_hygienic_args_values_ast/1`" do
+    test "returns the expected AST for each function arguments" do
+      arg_names = [:a, :b, :c]
+      result = FunctionArguments.get_not_hygienic_args_values_ast(arg_names)
+
+      arg_names
+      |> Enum.zip(result)
+      |> Enum.each(&assert_not_hygienic_arg_value_ast(&1))
+    end
+
+    test "returns a default value for each function argument that is ignored (starts with `_`)" do
+      arg_names = [:a, :b, :c, :_x, :_y, :d, :e, :_z, :f]
+      result = FunctionArguments.get_not_hygienic_args_values_ast(arg_names)
+
+      normal_arguments_and_result = [0, 1, 2, 5, 6, 8]
+                                    |> Enum.map(fn indx ->
+                                      {Enum.at(arg_names, indx), Enum.at(result, indx)}
+                                    end)
+
+      normal_arguments_and_result
+      |> Enum.each(&assert_not_hygienic_arg_value_ast(&1))
+
+      ignored_arguments_and_result = [3, 4, 7]
+                                    |> Enum.map(fn indx ->
+                                      {Enum.at(arg_names, indx), Enum.at(result, indx)}
+                                    end)
+
+      ignored_arguments_and_result
+      |> Enum.each(fn {name, result} ->
+        name = to_string(name)
+
+        assert String.starts_with?(name, "_")
+        assert result == :arg_cant_be_intercepted
+      end)
+    end
+  end
+
   def assert_ast_match({
     {_arg_name, _arg_metadata, _arg_context} = ast,
     {_expected_arg_name, _expected_arg_metadata, _expected_arg_context} = expected
@@ -239,6 +276,12 @@ defmodule FunctionArgumentsTest do
 
   def assert_ast_match(ast, expected) when is_list(ast) and is_list(expected) do
       assert Macro.to_string(ast) == Macro.to_string(expected)
+  end
+
+  def assert_not_hygienic_arg_value_ast({variable, ast}) when is_atom(variable) and is_tuple(ast) do
+    expected = quote context: Interceptor.FunctionArguments, do: var!(unquote(Macro.var(variable, nil)))
+
+    assert ast == expected
   end
 
   defp get_function_header(def_function_statement) do

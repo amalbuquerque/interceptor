@@ -173,7 +173,7 @@ defmodule InterceptorOnAfterTest do
       assert length(callback_calls) == 1
       assert result == result_callback
       assert result == false
-      assert intercepted_mfa == {InterceptedOnAfter5, :its_abc, [%{a: "map"}]}
+      assert intercepted_mfa == {InterceptedOnAfter5, :its_abc, [:arg_cant_be_intercepted]}
     end
   end
 
