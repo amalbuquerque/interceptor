@@ -1,5 +1,7 @@
 defmodule InterceptConfig do
   @config %{
+    ################# `Interceptor.intercept do ... end` tests
+
     # on before tests
     {InterceptedOnBefore1, :to_intercept, 0} => [before: {Before.Callback, :before, 1}],
     {InterceptedOnBefore2, :to_intercept, 0} => [before: {Before.Callback, :before, 1}],
@@ -44,6 +46,15 @@ defmodule InterceptConfig do
 
     # these configs will be overridden by own the module own configuration
     {InterceptedOnAfterOwnConfiguration1, :to_intercept, 0} => [after: {After.Callback, :right_after, 2}],
+
+    ################# `@intercept :true` tests
+
+    # on before tests
+    {AnnotatedInterceptedOnBefore1, :to_intercept, 0} => [before: {AnnotatedBefore.Callback, :before, 1}],
+    {AnnotatedInterceptedOnBefore2, :to_intercept, 0} => [before: {AnnotatedBefore.Callback, :before, 1}],
+    {AnnotatedInterceptedOnBefore2, :other_to_intercept, 0} => [before: {AnnotatedBefore.Callback, :before, 1}],
+    {AnnotatedInterceptedOnBefore3, :other_to_intercept, 1} => [before: {AnnotatedBefore.Callback, :before, 1}],
+    {AnnotatedInterceptedOnBefore4, :to_intercept, 0} => [before: {AnnotatedBefore.Callback, :before, 1}],
     }
 
   def get_intercept_config(), do: @config
