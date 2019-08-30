@@ -1,6 +1,8 @@
 defmodule Interceptor.FunctionArguments do
   alias Interceptor.Utils
 
+  @ignored_value :arg_cant_be_intercepted
+
   @doc """
   Use this function to get a tuple containing a list with the names
   of the function arguments and the list of the arguments in AST form.
@@ -74,13 +76,27 @@ defmodule Interceptor.FunctionArguments do
     {new_function_header, args_names}
   end
 
-  # TODO: receive the current module and pass it as context
+  @doc """
+  Returns the AST that gets us the value of each argument, so we can pass
+  the intercepted function argument values to the callback.
+
+  If the `arg_name` starts with `_`, it means it isn't used in the intercepted
+  function body, hence we shouldn't access its value to pass it to the callback
+  function, passing instead the @ignored_value.
+
+  TODO: receive the current module and pass it as context
+  """
   def get_not_hygienic_args_values_ast(nil), do: []
 
   def get_not_hygienic_args_values_ast(args_names) do
     args_names
-    |> Enum.map(fn arg_name ->
-      quote do: var!(unquote(Macro.var(arg_name, nil)))
+    |> Enum.map(&to_string/1)
+    |> Enum.map(fn
+      "_" <> arg_name -> @ignored_value
+      arg_name ->
+        arg_name = String.to_atom(arg_name)
+
+        quote do: var!(unquote(Macro.var(arg_name, nil)))
     end)
   end
 
