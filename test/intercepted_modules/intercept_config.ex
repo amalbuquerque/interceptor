@@ -55,6 +55,15 @@ defmodule InterceptConfig do
     {AnnotatedInterceptedOnBefore2, :other_to_intercept, 0} => [before: {AnnotatedBefore.Callback, :before, 1}],
     {AnnotatedInterceptedOnBefore3, :other_to_intercept, 1} => [before: {AnnotatedBefore.Callback, :before, 1}],
     {AnnotatedInterceptedOnBefore4, :to_intercept, 0} => [before: {AnnotatedBefore.Callback, :before, 1}],
+
+    # on after tests
+    {AnnotatedInterceptedOnAfter1, :to_intercept, 0} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
+    {AnnotatedInterceptedOnAfter2, :to_intercept, 0} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
+    {AnnotatedInterceptedOnAfter2, :other_to_intercept, 0} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
+    {AnnotatedInterceptedOnAfter3, :other_to_intercept, 1} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
+    {AnnotatedInterceptedOnAfter4, :to_intercept_guarded, 1} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
+    {AnnotatedInterceptedOnAfter5, :it_has_threes, 1} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
+    {AnnotatedInterceptedOnAfter5, :its_abc, 1} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
     }
 
   def get_intercept_config(), do: @config
