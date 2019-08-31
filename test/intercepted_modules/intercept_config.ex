@@ -75,6 +75,12 @@ defmodule InterceptConfig do
     {AnnotatedInterceptedOnSuccess4, :with_structs, 2} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
     {AnnotatedInterceptedOnSuccess4, :with_struct_already_assigned, 1} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
 
+    # on error tests
+    {AnnotatedInterceptedOnError1, :to_intercept, 0} => [on_error: {AnnotatedOnError.Callback, :on_error, 3}],
+    {AnnotatedInterceptedOnError2, :to_intercept, 0} => [on_error: {AnnotatedOnError.Callback, :on_error, 3}],
+    {AnnotatedInterceptedOnError2, :other_to_intercept, 0} => [on_error: {AnnotatedOnError.Callback, :on_error, 3}],
+    {AnnotatedInterceptedOnError3, :other_to_intercept, 1} => [on_error: {AnnotatedOnError.Callback, :on_error, 3}],
+
     }
 
   def get_intercept_config(), do: @config
