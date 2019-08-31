@@ -64,6 +64,17 @@ defmodule InterceptConfig do
     {AnnotatedInterceptedOnAfter4, :to_intercept_guarded, 1} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
     {AnnotatedInterceptedOnAfter5, :it_has_threes, 1} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
     {AnnotatedInterceptedOnAfter5, :its_abc, 1} => [after: {AnnotatedAfter.Callback, :right_after, 2}],
+
+    # on success tests
+    {AnnotatedInterceptedOnSuccess1, :to_intercept, 0} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
+    {AnnotatedInterceptedOnSuccess2, :to_intercept, 0} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
+    {AnnotatedInterceptedOnSuccess2, :other_to_intercept, 0} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
+    {AnnotatedInterceptedOnSuccess3, :other_to_intercept, 1} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
+    {AnnotatedInterceptedOnSuccess3, :trickier_args_function, 6} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
+    {AnnotatedInterceptedOnSuccess4, :with_struct, 1} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
+    {AnnotatedInterceptedOnSuccess4, :with_structs, 2} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
+    {AnnotatedInterceptedOnSuccess4, :with_struct_already_assigned, 1} => [on_success: {AnnotatedOnSuccess.Callback, :on_success, 3}],
+
     }
 
   def get_intercept_config(), do: @config
