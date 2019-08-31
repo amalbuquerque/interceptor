@@ -81,6 +81,13 @@ defmodule InterceptConfig do
     {AnnotatedInterceptedOnError2, :other_to_intercept, 0} => [on_error: {AnnotatedOnError.Callback, :on_error, 3}],
     {AnnotatedInterceptedOnError3, :other_to_intercept, 1} => [on_error: {AnnotatedOnError.Callback, :on_error, 3}],
 
+    # wrapper tests
+    {AnnotatedInterceptedByWrapper1, :to_intercept, 0} => [wrapper: {AnnotatedWrapper.Callback, :wrap_returns_result, 2}],
+    {AnnotatedInterceptedByWrapper2, :to_intercept, 0} => [wrapper: {AnnotatedWrapper.Callback, :wrap_returns_result, 2}],
+    {AnnotatedInterceptedByWrapper2, :other_to_intercept, 0} => [wrapper: {AnnotatedWrapper.Callback, :wrap_returns_result, 2}],
+    {AnnotatedInterceptedByWrapper3, :other_to_intercept, 1} => [wrapper: {AnnotatedWrapper.Callback, :wrap_returns_result, 2}],
+    {AnnotatedInterceptedByWrapper4, :to_intercept, 0} => [wrapper: {AnnotatedWrapper.Callback, :wrap_returns_hello, 2}],
+
     }
 
   def get_intercept_config(), do: @config
