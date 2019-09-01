@@ -92,7 +92,7 @@ defmodule Interceptor.FunctionArguments do
     args_names
     |> Enum.map(&to_string/1)
     |> Enum.map(fn
-      "_" <> arg_name -> @ignored_value
+      "_" <> _arg_name -> @ignored_value
       arg_name ->
         arg_name = String.to_atom(arg_name)
 
