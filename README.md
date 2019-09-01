@@ -1,8 +1,6 @@
 ![Interceptor](https://github.com/amalbuquerque/interceptor/raw/master/assets/images/interceptor_logo_with_title.png)
 
-[![Actions Status](https://github.com/amalbuquerque/interceptor/workflows/master%20tests/badge.svg)](https://github.com/amalbuquerque/interceptor/actions)
-
-[![Coverage Status](https://coveralls.io/repos/github/amalbuquerque/interceptor/badge.svg?branch=master)](https://coveralls.io/github/amalbuquerque/interceptor?branch=master)
+[![Actions Status](https://github.com/amalbuquerque/interceptor/workflows/Tests/badge.svg)](https://github.com/amalbuquerque/interceptor/actions) [![Coverage Status](https://coveralls.io/repos/github/amalbuquerque/interceptor/badge.svg?branch=refs/heads/master)](https://coveralls.io/github/amalbuquerque/interceptor?branch=refs/heads/master) [![hex.pm version](https://img.shields.io/hexpm/v/interceptor.svg)](https://hex.pm/packages/interceptor) [![hex.pm downloads](https://img.shields.io/hexpm/dt/interceptor.svg)](https://hex.pm/packages/interceptor)
 =========
 
 The Interceptor library allows you to intercept function calls, by configuring
