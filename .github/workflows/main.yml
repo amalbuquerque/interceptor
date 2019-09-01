@@ -1,4 +1,4 @@
-name: Tests
+name: master tests
 
 on:
   push:
@@ -22,7 +22,8 @@ jobs:
         mix local.hex --force
         mix deps.get
 
-    - name: Run Tests
+    - name: Run Tests and Coveralls
       env:
+        COVERALLS_REPO_TOKEN: ${{ secrets.coveralls_repo_token }}
         MIX_ENV: test
-      run: mix test
+      run: mix coveralls --post --branch "${GITHUB_REF}" --name "GH ${GITHUB_WORKFLOW}" --commiter "${GITHUB_ACTOR}" --sha "${GITHUB_SHA}"

@@ -12,6 +12,8 @@ defmodule Interceptor.MixProject do
       deps: deps(),
       elixirc_paths: elixirc_paths(Mix.env()),
       docs: docs(),
+      test_coverage: [tool: ExCoveralls],
+      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test]
     ]
   end
 
@@ -25,6 +27,7 @@ defmodule Interceptor.MixProject do
     [
       {:ex_doc, ">= 0.0.0", only: :dev},
       {:mox, "0.5.1", only: :test},
+      {:excoveralls, "~> 0.11.2", only: :test},
     ]
   end
 
