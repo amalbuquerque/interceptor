@@ -23,4 +23,4 @@ jobs:
       env:
         COVERALLS_REPO_TOKEN: ${{ secrets.coveralls_repo_token }}
         MIX_ENV: test
-      run: mix coveralls --post --branch "${GITHUB_REF}" --name "GH ${GITHUB_WORKFLOW}" --commiter "${GITHUB_ACTOR}" --sha "${GITHUB_SHA}"
+      run: mix coveralls.post --branch "${GITHUB_REF}" --name "GH ${GITHUB_WORKFLOW}" --committer "${GITHUB_ACTOR}" --sha "${GITHUB_SHA}"
