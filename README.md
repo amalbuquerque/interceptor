@@ -1,6 +1,6 @@
 ![Interceptor](https://github.com/amalbuquerque/interceptor/raw/master/assets/images/interceptor_logo_with_title.png)
 
-[![Actions Status](https://github.com/amalbuquerque/interceptor/workflows/Tests/badge.svg)](https://github.com/amalbuquerque/interceptor/actions)
+[![Actions Status](https://github.com/amalbuquerque/interceptor/workflows/master%20tests/badge.svg)](https://github.com/amalbuquerque/interceptor/actions)
 =========
 
 The Interceptor library allows you to intercept function calls, by configuring
