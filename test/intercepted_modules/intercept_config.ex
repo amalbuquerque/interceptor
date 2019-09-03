@@ -91,7 +91,8 @@ defmodule InterceptConfig do
     # edge cases
     {AnnotatedInterceptedEdgeCases1, :to_intercept, 3} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
 
-    # note: currently, Interceptor.Annotated doesn't allow intercepted modules overriding the intercept configuration
+    # these configs will be overridden by the module own configuration
+    {AnnotatedInterceptedOnAfterOwnConfiguration1, :to_intercept, 0} => [after: {After.Callback, :right_after, 2}],
   }
 
   def get_intercept_config(), do: @config
