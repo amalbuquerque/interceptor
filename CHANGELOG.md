@@ -2,7 +2,13 @@
 
 * intercepted functions without arguments that don't have `()` isn't working (e.g. `def foo, do: 123`)
 
-* If argument isn't used (e.g. `_arg`) by the original function, interceptor should pass the value `:not_used` to the callback function, instead of the actual `_arg` value. This will allow us to avoid the warning that currently happens (e.g. using a `_bla` variable);
+# Changelog for v0.5.0
+
+## Changes
+
+* Fix a bug where, if a function argument wasn't used (e.g. `_arg`) by the original function, interceptor was passing the actual `_arg` value to the callback function. Now, the `:arg_cant_be_intercepted` value it's passed to the callback function instead. This allowed us to fix the compiler warning about "using a `_bla` variable";
+
+* You can intercept your functions using the `Interceptor.Annotated` module and annotating your functions with `@intercept true`, instead of relying on the previous strategy with the `Interceptor.intercept/1` macro.
 
 # Changelog for v0.4.3
 
