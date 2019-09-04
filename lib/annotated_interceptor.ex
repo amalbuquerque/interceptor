@@ -6,8 +6,8 @@ defmodule Interceptor.Annotated do
   This module allows you to intercept your functions using `@intercept true`
   "annotations", instead of having to use the `Interceptor.intercept/1` macro.
 
-  Using the `Interceptor.Annotated` module on the example `Intercepted` module
-  (defined on the `Interceptor` module documentation) looks like this:
+  This is how you can use the `Interceptor.Annotated` module on the example
+  `Intercepted` module (defined on the `Interceptor` module documentation):
 
   ```
   defmodule Intercepted do

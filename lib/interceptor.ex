@@ -70,6 +70,11 @@ defmodule Interceptor do
   end
   ```
 
+  _Note1:_ If you don't like to use the `Interceptor.intercept/1` block, you
+  can annotate your functions with `@intercept true` and use the
+  `Interceptor.Annotated` module. Please check the `Interceptor.Annotated`
+  module documentation for more information.
+
   In the previous example, we defined four callbacks:
 
   - a `before` callback, that will be called before the intercepted function starts;
