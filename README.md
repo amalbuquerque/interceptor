@@ -4,7 +4,8 @@
 =========
 
 The Interceptor library allows you to intercept function calls, by configuring
-the interception functions and using the `Interceptor.intercept/1` macro.
+the interception functions and using the `Interceptor.intercept/1` macro or the
+`@intercept true` annotation.
 
 ## Installation
 
@@ -14,7 +15,7 @@ dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:interceptor, "~> 0.4.0"}
+    {:interceptor, "~> 0.5.0"}
   ]
 end
 ```
@@ -46,7 +47,7 @@ config :interceptor,
   configuration: Interception.Config
 ```
 
-Define your interceptor module:
+Define your interceptor module, which contains the callback functions:
 
 ```elixir
 defmodule MyInterceptor do
@@ -67,7 +68,8 @@ block. If your functions are placed out of this block or if they don't have
 a corresponding interceptor configuration, they won't be intercepted.
 
 In the next snippet, the `Intercepted.foo/0` function won't be intercepted
-because it's out of the `Interceptor.intercept/1` do-block. Notice that you can also intercept private functions.
+because it's out of the `Interceptor.intercept/1` do-block. Notice that you
+can also intercept private functions.
 
 ```elixir
 defmodule Intercepted do
@@ -83,20 +85,38 @@ defmodule Intercepted do
 end
 ```
 
+Alternatively, you can use the `Interceptor.Annotated` module and rely on
+the `@intercept true` "annotation":
+
+```elixir
+defmodule Intercepted do
+  use Interceptor.Annotated
+
+  @intercept true
+  def abc(x), do: "Got #{inspect(x)}"
+
+  @intercept true
+  defp private_hello(y), do: "Hello #{inspect(y)}"
+
+  def foo, do: "Hi there"
+end
+```
+
 Now when you run your code, whenever the `Intercepted.abc/1` function is
 called, it will be intercepted *before* it starts and *after* it completes.
 Whenever the `Intercepted.private_hello/1` executes successfully, the
-corresponding callback will also be called. You also have `on_error` and
-`wrapper` callbacks. Check the full documentation for further examples and
-other alternative configuration approaches.
+corresponding callback will also be called.
+
+You also have `on_error` and `wrapper` callbacks. Check the full documentation
+for further examples and other alternative configuration approaches.
 
 ## More info
 
 You can find the library documentation at
 [https://hexdocs.pm/interceptor](https://hexdocs.pm/interceptor).
 
+You can also find the changelog [here](https://github.com/amalbuquerque/interceptor/blob/master/CHANGELOG.md).
+
 ## TODO
 
-- Annotated.Interceptor tests;
 - Update docs to mention how to understand if we're trying to intercept non-existing functions with the `Interceptor.Configuration.Validator` module;
-- Updating docs for the Annotated.Interceptor way.

@@ -1,4 +1,32 @@
 defmodule Interceptor.Annotated do
+  @moduledoc """
+  The Interceptor library allows you to intercept function calls, as you can see
+  in the `Interceptor` module documentation.
+
+  This module allows you to intercept your functions using `@intercept true`
+  "annotations", instead of having to use the `Interceptor.intercept/1` macro.
+
+  Using the `Interceptor.Annotated` module on the example `Intercepted` module
+  (defined on the `Interceptor` module documentation) looks like this:
+
+  ```
+  defmodule Intercepted do
+    use Interceptor.Annotated
+
+    @intercept true
+    def abc(x), do: "Got \#\{inspect(x)\}"
+
+    # the following function can't be intercepted
+    # because it doesn't have the `@intercept true` annotation
+    def not_intercepted(f, g, h), do: f+g+h
+  end
+  ```
+
+  This way of intercepting the `Intercepted.abc/1` function is equivalent to
+  the one using the `Interceptor.intercept/1` macro described on the
+  `Interceptor` module documentation. Please check it for more information
+  on how to configure this library.
+  """
 
   alias Interceptor.Debug
 
