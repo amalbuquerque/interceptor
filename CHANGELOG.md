@@ -2,7 +2,7 @@
 
 * intercepted functions without arguments that don't have `()` isn't working (e.g. `def foo, do: 123`)
 
-# Changelog for v0.5.0
+# Changelog for v0.5.1
 
 ## Changes
 

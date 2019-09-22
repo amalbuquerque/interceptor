@@ -135,7 +135,7 @@ defmodule Interceptor.FunctionArguments do
   # in this case, `arg_ast` doesn't contain an assignment, so we are "manually"
   # placing it inside an assignment statement
   defp get_arg_name_and_its_ast({arg_name, _metadata, _context} = arg_ast)
-    when arg_name in [:<<>>, :{}, :%{}, :%] do
+  when arg_name in [:<<>>, :{}, :%{}, :%, :<>] do
     random_name = Utils.random_atom()
 
     # arg variables always have their context as nil
