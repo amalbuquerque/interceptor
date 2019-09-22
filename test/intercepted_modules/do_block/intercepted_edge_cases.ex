@@ -19,5 +19,7 @@ defmodule InterceptedEdgeCases1 do
 
   I.intercept do
     def to_intercept(a, b, _to_ignore), do: "#{a} #{b}"
+
+    def intercept_with_prefix("some_prefix:" <> suffix), do: suffix
   end
 end

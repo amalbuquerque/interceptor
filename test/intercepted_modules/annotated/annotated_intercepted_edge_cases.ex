@@ -19,4 +19,7 @@ defmodule AnnotatedInterceptedEdgeCases1 do
 
   @intercept true
   def to_intercept(a, b, _to_ignore), do: "#{a} #{b}"
+
+  @intercept true
+  def intercept_with_prefix("some_prefix:" <> abc), do: abc
 end
