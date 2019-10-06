@@ -35,6 +35,38 @@ defmodule AnnotatedInterceptorEdgeCasesTest do
     end
   end
 
+  describe "custom intercept attribute and functions with argument using `<>`" do
+    test "it passes the argument with the prefix before `<>`" do
+      {:ok, _pid} = spawn_agent()
+
+      result = AnnotatedInterceptedEdgeCases2.intercept_with_prefix("some_prefix:blabla")
+
+      callback_calls = get_agent_messages()
+
+      [{_started_at, _ended_at, callback_result, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == callback_result
+      assert intercepted_mfa == {AnnotatedInterceptedEdgeCases2, :intercept_with_prefix, ["some_prefix:blabla"]}
+    end
+  end
+
+  describe "custom intercept attribute and module with functions with ignored arguments" do
+    test "it passes the ignored arguments as `:arg_cant_be_intercepted`" do
+      {:ok, _pid} = spawn_agent()
+
+      result = AnnotatedInterceptedEdgeCases2.to_intercept(1, 2, 3)
+
+      callback_calls = get_agent_messages()
+
+      [{_started_at, _ended_at, callback_result, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == callback_result
+      assert intercepted_mfa == {AnnotatedInterceptedEdgeCases2, :to_intercept, [1, 2, :arg_cant_be_intercepted]}
+    end
+  end
+
   defp spawn_agent() do
     @process_name
     |> Process.whereis()

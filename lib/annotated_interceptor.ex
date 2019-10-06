@@ -37,7 +37,11 @@ defmodule Interceptor.Annotated do
     {own_config_module, _bindings} = Code.eval_quoted(own_config)
     Module.put_attribute(__CALLER__.module, :own_config, own_config_module)
 
-    Module.register_attribute(__CALLER__.module, :intercept, accumulate: true)
+    intercept_attribute = Keyword.get(opts, :attribute_name, :intercept)
+
+    Module.put_attribute(__CALLER__.module, :attribute_intercept, intercept_attribute)
+
+    Module.register_attribute(__CALLER__.module, intercept_attribute, accumulate: true)
     Module.register_attribute(__CALLER__.module, :intercepted, accumulate: true)
 
     quote do
@@ -55,7 +59,7 @@ defmodule Interceptor.Annotated do
       }, args=#{inspect(args)}, guards=#{inspect(guards)}, body=#{inspect(body)}"
     )
 
-    intercept_annotations = Module.get_attribute(env.module, :intercept)
+    intercept_annotations = get_intercept_annotations(env.module)
 
     Debug.debug_message("Intercept annotations #{inspect(intercept_annotations)}")
 
@@ -63,12 +67,14 @@ defmodule Interceptor.Annotated do
     intercepted = {kind, fun, args, guards, body, intercept_annotations, attrs}
 
     Module.put_attribute(env.module, :intercepted, intercepted)
-    Module.delete_attribute(env.module, :intercept)
+    delete_intercept_annotation(env.module)
   end
 
   defmacro before_compile(env) do
-    all_collected = Module.get_attribute(env.module, :intercepted) |> Enum.reverse()
-    Module.delete_attribute(env.module, :intercepted)
+    all_collected = Module.get_attribute(env.module, :intercepted)
+                    |> Enum.reverse()
+
+    delete_attributes_used(env.module)
 
     to_print =
       all_collected
@@ -206,5 +212,22 @@ defmodule Interceptor.Annotated do
     end)
     # return the accumulated attrs
     |> elem(1)
+  end
+
+  defp get_intercept_annotations(module) do
+    attribute = Module.get_attribute(module, :attribute_intercept)
+
+    Module.get_attribute(module, attribute)
+  end
+
+  defp delete_intercept_annotation(module) do
+    attribute = Module.get_attribute(module, :attribute_intercept)
+
+    Module.delete_attribute(module, attribute)
+  end
+
+  defp delete_attributes_used(module) do
+    Module.delete_attribute(module, :intercepted)
+    Module.delete_attribute(module, :attribute_intercept)
   end
 end

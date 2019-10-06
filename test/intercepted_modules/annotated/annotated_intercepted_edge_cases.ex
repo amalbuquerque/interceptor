@@ -23,3 +23,13 @@ defmodule AnnotatedInterceptedEdgeCases1 do
   @intercept true
   def intercept_with_prefix("some_prefix:" <> abc), do: abc
 end
+
+defmodule AnnotatedInterceptedEdgeCases2 do
+  use Interceptor.Annotated, attribute_name: :xpto_intercept
+
+  @xpto_intercept true
+  def to_intercept(a, b, _to_ignore), do: "#{a} #{b}"
+
+  @xpto_intercept true
+  def intercept_with_prefix("some_prefix:" <> abc), do: abc
+end
