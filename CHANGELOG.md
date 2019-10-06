@@ -2,6 +2,12 @@
 
 * intercepted functions without arguments that don't have `()` isn't working (e.g. `def foo, do: 123`)
 
+# Changelog for v0.5.2
+
+## Changes
+
+* Allow to customize the attribute name when using the `Interceptor.Annotated`, hence we can use an attribute name other than `@intercept`. This will be really useful for a new library I'm thinking about named `cachemere`.
+
 # Changelog for v0.5.1
 
 ## Changes
