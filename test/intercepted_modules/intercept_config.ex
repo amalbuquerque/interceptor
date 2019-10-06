@@ -92,6 +92,8 @@ defmodule InterceptConfig do
     # edge cases
     {AnnotatedInterceptedEdgeCases1, :to_intercept, 3} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
     {AnnotatedInterceptedEdgeCases1, :intercept_with_prefix, 1} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
+    {AnnotatedInterceptedEdgeCases2, :to_intercept, 3} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
+    {AnnotatedInterceptedEdgeCases2, :intercept_with_prefix, 1} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
 
     # these configs will be overridden by the module own configuration
     {AnnotatedInterceptedOnAfterOwnConfiguration1, :to_intercept, 0} => [after: {After.Callback, :right_after, 2}],
