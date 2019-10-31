@@ -2,6 +2,11 @@ defmodule Interceptor.Utils do
   alias Interceptor.Configuration
 
   @mfa_regex ~r/(.*)\.(.*)\/(\d)$/
+  @mfa_arity_wildcarded_regex ~r/(.*)\.(.*)\/(\*)$/
+  @mfa_function_and_arity_wildcarded_regex ~r/(.*)\.(\*)\/(\*)$/
+
+  @allowed_string_format "'<Module>.<Function>/<Arity>', '<Module>.<Function>/*' or '<Module>.*/*'"
+  @allowed_tuple_format "{Module, :function, <arity>}, {Module, :function, :*} or {Module, :*, :*}"
 
   def timestamp(), do: :os.system_time(:microsecond)
 
@@ -20,9 +25,9 @@ defmodule Interceptor.Utils do
   |> String.to_atom()
 
   def get_mfa_from_string(mfa_string) when is_binary(mfa_string) do
-    Regex.run(@mfa_regex, mfa_string)
+    parse_mfa_with_regexes(mfa_string)
     |> case do
-      nil -> raise("Invalid MFA (#{mfa_string}), it needs to be of the format '<Module>.<Function>/<Arity>'.")
+      nil -> raise("Invalid MFA (#{mfa_string}), it needs to have the format #{@allowed_string_format}.")
       [_all, string_module, string_function, string_arity] -> mfa_from_string(string_module, string_function, string_arity)
     end
   end
@@ -31,8 +36,16 @@ defmodule Interceptor.Utils do
     mfa
   end
 
+  def get_mfa_from_string({module, :*, :*} = mfa) when is_atom(module) do
+    mfa
+  end
+
+  def get_mfa_from_string({module, function, :*} = mfa) when is_atom(module) and is_atom(function) do
+    mfa
+  end
+
   def get_mfa_from_string(not_an_mfa) do
-    raise("Invalid MFA (#{inspect(not_an_mfa)}), it needs to be of the format '<Module>.<Function>/<Arity>' or {Module, :function, <arity>}.")
+    raise("Invalid MFA (#{inspect(not_an_mfa)}), it needs to have the format #{@allowed_string_format} or #{@allowed_tuple_format}.")
   end
 
   def check_if_mfa_exists(module, function, arity) do
@@ -53,8 +66,17 @@ defmodule Interceptor.Utils do
     module = String.to_atom("Elixir.#{string_module}")
 
     function = String.to_atom(string_function)
-    arity = String.to_integer(string_arity)
+    arity = case string_arity do
+      "*"     -> :*
+        arity -> String.to_integer(string_arity)
+    end
 
     {module, function, arity}
+  end
+
+  defp parse_mfa_with_regexes(mfa_string) do
+    Regex.run(@mfa_regex, mfa_string) ||
+      Regex.run(@mfa_arity_wildcarded_regex, mfa_string) ||
+        Regex.run(@mfa_function_and_arity_wildcarded_regex, mfa_string)
   end
 end

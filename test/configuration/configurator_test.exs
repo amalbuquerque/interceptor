@@ -54,6 +54,19 @@ defmodule ConfiguratorTest do
       }
       assert expected == StreamlinedInterceptConfigMixedFormat2.get_intercept_config()
     end
+
+    test "Mixed callback functions (tuple and streamlined config entries) with wildcards for the function and arity" do
+      expected = %{
+        {
+          InterceptedOnBefore1, :to_intercept, 0} => [
+            before: {Before.Callback, :*, :*},
+            after: {After.Callback, :*, :*},
+            on_success: {Success.Callback, :if_everything_ok, :*},
+            on_error: {Error.Callback, :if_borked, :*},
+          ],
+      }
+      assert expected == StreamlinedInterceptConfigWildcarded.get_intercept_config()
+    end
   end
 
   describe "one bad intercept config" do

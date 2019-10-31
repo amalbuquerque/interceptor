@@ -30,6 +30,34 @@ defmodule Interceptor.UtilsTest do
       assert {Zi.Zo.Mananananana.Foo.Bar.Qaz.Zac.Bla, :func, 0} == @subject.get_mfa_from_string("Zi.Zo.Mananananana.Foo.Bar.Qaz.Zac.Bla.func/0")
     end
 
+    test "it returns the MFA of a string with wildcarded arity" do
+      assert {Bla.Blu, :func, :*} == @subject.get_mfa_from_string("Bla.Blu.func/*")
+    end
+
+    test "it returns the MFA of a string with wildcarded function and arity" do
+      assert {Bla.Blu, :*, :*} == @subject.get_mfa_from_string("Bla.Blu.*/*")
+    end
+
+    test "it returns the exact same MFA of a tuple with wildcarded arity" do
+      assert {Bla.Blu, :func, :*} == @subject.get_mfa_from_string({Bla.Blu, :func, :*})
+    end
+
+    test "it returns the exact same MFA of a tuple with wildcarded function and arity" do
+      assert {Bla.Blu, :*, :*} == @subject.get_mfa_from_string({Bla.Blu, :*, :*})
+    end
+
+    test "it raises an error when the string isn't valid" do
+      assert_raise RuntimeError, fn ->
+        @subject.get_mfa_from_string("oh no bad string")
+      end
+    end
+
+    test "it raises an error when the MFA isn't valid" do
+      assert_raise RuntimeError, fn ->
+        @subject.get_mfa_from_string({:bla, 123, :blu, 456})
+      end
+    end
+
     test "it returns the MFA of an existing function" do
       {module, func, arity} = @subject.get_mfa_from_string("Enum.member?/2")
 

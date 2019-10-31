@@ -40,6 +40,15 @@ defmodule StreamlinedInterceptConfigMixedFormat2 do
     on_error: {Error.Callback, :if_borked, 3}
 end
 
+defmodule StreamlinedInterceptConfigWildcarded do
+  use Interceptor.Configurator
+
+  intercept {InterceptedOnBefore1, :to_intercept, 0},
+    before: "Before.Callback.*/*",
+    after: {After.Callback, :*, :*},
+    on_success: "Success.Callback.if_everything_ok/*",
+    on_error: {Error.Callback, :if_borked, :*}
+end
 
 defmodule StreamlinedInterceptConfigBad do
   use Interceptor.Configurator
