@@ -83,8 +83,8 @@ defmodule Interceptor.Utils do
 
     function = String.to_atom(string_function)
     arity = case string_arity do
-      "*"     -> :*
-        arity -> String.to_integer(string_arity)
+      "*"    -> :*
+      _arity -> String.to_integer(string_arity)
     end
 
     {module, function, arity}

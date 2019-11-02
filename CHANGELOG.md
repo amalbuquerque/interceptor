@@ -2,6 +2,11 @@
 
 - None at this time :)
 
+# Changelog for v0.5.3
+
+* Allow the usage of wildcards when configuring the interception callbacks for a given function, i.e., several intercepted functions can now be configured with a single interception configuration entry by declaring the intercepted function as `{Intercepted, :*, :*}` or `"Intercepted.*/*"`;
+* Fix a bug (since the very first version 😅) that forced 0-arity functions to have parens or they wouldn't be intercepted.
+
 # Changelog for v0.5.2
 
 ## Changes

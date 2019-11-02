@@ -15,7 +15,7 @@ dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:interceptor, "~> 0.5.2"}
+    {:interceptor, "~> 0.5.3"}
   ]
 end
 ```
@@ -109,6 +109,26 @@ corresponding callback will also be called.
 
 You also have `on_error` and `wrapper` callbacks. Check the full documentation
 for further examples and other alternative configuration approaches.
+
+### Wildcarded interception configuration
+
+If you want to intercept all the `Intercepted` module functions without
+having to specify an `intercept Intercepted.<function>/<arity>, ...` entry for
+each function on the `Interception.Config` module, you can now use wildcards 😎.
+
+The following configuration lets us intercept every `Intercepted` function
+(inside the `Interceptor.intercept/1` block or annotated with the
+`@intercept true` attribute).
+
+```elixir
+defmodule Interception.Config do
+  use Interceptor.Configurator
+
+  intercept "Intercepted.*/*",
+    before: "MyInterceptor.intercept_before/1",
+    after: "MyInterceptor.intercept_after/2"
+end
+```
 
 ## More info
 

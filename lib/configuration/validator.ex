@@ -15,7 +15,7 @@ defmodule Interceptor.Configuration.Validator do
                  |> Enum.map(&get_intercept_config_from_module/1)
                  |> Enum.flat_map(&Enum.map(&1, fn
                    # we don't check wildcarded MFAs
-                   {{m, f, a}, _callbacks} when f == :* or a == :* -> true
+                   {{_m, f, a}, _callbacks} when f == :* or a == :* -> true
                    {{m, f, a}, _callbacks} -> Utils.check_if_mfa_exists(m, f, a)
                  end))
                  |> Enum.reduce(true, fn exists?, acc -> acc and exists? end)

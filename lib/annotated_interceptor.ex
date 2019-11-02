@@ -26,6 +26,15 @@ defmodule Interceptor.Annotated do
   the one using the `Interceptor.intercept/1` macro described on the
   `Interceptor` module documentation. Please check it for more information
   on how to configure this library.
+
+  _Note:_ If you want to override the interception configuration coming from the
+  application configuration file (i.e. `config/config.exs`) or you simply just
+  want to set the interception configuration on each intercepted module, you
+  can also pass the interception `config` when using the `Interceptor.Annotated`
+  module: `use Interceptor.Annotated, config: My.Interception.Config`.
+  
+  Check the section _Intercept configuration on the intercepted module_ on the
+  `Interceptor` module docs for more information.
   """
 
   alias Interceptor.Debug

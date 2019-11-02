@@ -6,7 +6,7 @@ defmodule Interceptor.MixProject do
       app: :interceptor,
       package: package(),
       source_url: "https://github.com/amalbuquerque/interceptor",
-      version: "0.5.2",
+      version: "0.5.3",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
       deps: deps(),

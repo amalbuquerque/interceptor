@@ -1,10 +1,13 @@
 defmodule Interceptor do
   @moduledoc """
-  The Interceptor library allows you to intercept function calls, by configuring
-  your interception functions and using the `Interceptor.intercept/1` macro.
+  The Interceptor library allows you to intercept function calls by configuring
+  your interception functions and then:
 
-  Create a module with a `get_intercept_config/0` function that returns the
-  interception configuration map.
+  - Apply the `Interceptor.intercept/1` macro to the modules you want to intercept, or;
+  - Use the `Interceptor.Annotated` module along with the `@intercept true` annotation.
+
+  Start by creating a module with a `get_intercept_config/0` function that
+  returns the interception configuration map.
 
   In the example below, the `Intercepted.abc/1` function will be intercepted
   *before* it starts, *after* it ends, and when it concludes successfully or not:
@@ -70,10 +73,14 @@ defmodule Interceptor do
   end
   ```
 
-  _Note1:_ If you don't like to use the `Interceptor.intercept/1` block, you
+  ### Or, use the `@intercept true` approach 💡
+
+  If you don't like to use the `Interceptor.intercept/1` block, you
   can annotate your functions with `@intercept true` and use the
   `Interceptor.Annotated` module. Please check the `Interceptor.Annotated`
   module documentation for more information.
+
+  ### Callbacks 101
 
   In the previous example, we defined four callbacks:
 
