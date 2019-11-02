@@ -32,8 +32,8 @@ defmodule Interceptor.Annotated do
   want to set the interception configuration on each intercepted module, you
   can also pass the interception `config` when using the `Interceptor.Annotated`
   module: `use Interceptor.Annotated, config: My.Interception.Config`.
-  
-  Check the section _Intercept configuration on the intercepted module_ on the
+
+  Check the section [Intercept configuration on the intercepted module](Interceptor.html#module-intercept-configuration-on-the-intercepted-module) on the
   `Interceptor` module docs for more information.
   """
 

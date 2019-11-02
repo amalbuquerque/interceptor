@@ -25,7 +25,7 @@ defmodule Interceptor.MixProject do
 
   defp deps do
     [
-      {:ex_doc, ">= 0.0.0", only: :dev},
+      {:ex_doc, "~> 0.21", only: :dev},
       {:mox, "0.5.1", only: :test},
       {:excoveralls, "~> 0.12.0", only: :test},
     ]
