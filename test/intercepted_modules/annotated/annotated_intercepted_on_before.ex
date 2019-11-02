@@ -43,9 +43,8 @@ end
 defmodule AnnotatedInterceptedOnBefore4 do
   use Interceptor.Annotated
 
-  # TODO: Solve known issue 1
   @intercept true
-  def to_intercept(), do: "Hello, even without args"
+  def to_intercept, do: "Hello, even without args"
 
   @intercept true
   def bla, do: 123

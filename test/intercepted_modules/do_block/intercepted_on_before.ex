@@ -42,8 +42,7 @@ defmodule InterceptedOnBefore4 do
   require Interceptor, as: I
 
   I.intercept do
-    # TODO: Solve known issue 1
-    def to_intercept(), do: "Hello, even without args"
+    def to_intercept, do: "Hello, even without args"
 
     def bla, do: 123
   end
