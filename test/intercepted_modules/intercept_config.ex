@@ -45,6 +45,10 @@ defmodule InterceptConfig do
     {InterceptedEdgeCases1, :to_intercept, 3} => [on_success: {EdgeCases.Callbacks, :success_cb, 3}, on_error: {EdgeCases.Callbacks, :error_cb, 3}],
     {InterceptedEdgeCases1, :intercept_with_prefix, 1} => [on_success: {EdgeCases.Callbacks, :success_cb, 3}, on_error: {EdgeCases.Callbacks, :error_cb, 3}],
 
+    # wildcarded callbacks
+    {InterceptedWildcardedMfa1, :foo, :*} => [on_success: {WildcardedMfa.Callbacks, :success_cb, 3}, on_error: {WildcardedMfa.Callbacks, :error_cb, 3}],
+    {InterceptedWildcardedMfa2, :*, :*} => [on_success: {WildcardedMfa.Callbacks, :success_cb, 3}, on_error: {WildcardedMfa.Callbacks, :error_cb, 3}],
+
     # these configs will be overridden by the module own configuration
     {InterceptedOnAfterOwnConfiguration1, :to_intercept, 0} => [after: {After.Callback, :right_after, 2}],
 
@@ -94,6 +98,11 @@ defmodule InterceptConfig do
     {AnnotatedInterceptedEdgeCases1, :intercept_with_prefix, 1} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
     {AnnotatedInterceptedEdgeCases2, :to_intercept, 3} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
     {AnnotatedInterceptedEdgeCases2, :intercept_with_prefix, 1} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
+
+    # wildcarded callbacks
+    {AnnotatedInterceptedWildcardedMfa1, :foo, :*} => [on_success: {AnnotatedWildcardedMfa.Callbacks, :success_cb, 3}, on_error: {AnnotatedWildcardedMfa.Callbacks, :error_cb, 3}],
+    {AnnotatedInterceptedWildcardedMfa2, :*, :*} => [on_success: {AnnotatedWildcardedMfa.Callbacks, :success_cb, 3}, on_error: {AnnotatedWildcardedMfa.Callbacks, :error_cb, 3}],
+
 
     # these configs will be overridden by the module own configuration
     {AnnotatedInterceptedOnAfterOwnConfiguration1, :to_intercept, 0} => [after: {After.Callback, :right_after, 2}],

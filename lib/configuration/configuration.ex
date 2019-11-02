@@ -17,9 +17,16 @@ defmodule Interceptor.Configuration do
     get_interceptor_module_function_for(mfa_to_intercept, interception_type)
   end
 
-  def get_interceptor_module_function_for({module, _function, _arity} = to_intercept, interception_type) do
+  def get_interceptor_module_function_for({module, function, nil = _arity} = to_intercept, interception_type) do
+    # functions with arity 0 without parens have their arity as nil
+    get_interceptor_module_function_for({module, function, 0}, interception_type)
+  end
+
+  def get_interceptor_module_function_for({module, function, _arity} = to_intercept, interception_type) do
     interception_configuration = get_configuration(module)
     configuration = interception_configuration[to_intercept]
+                    || interception_configuration[{module, function, :*}]
+                    || interception_configuration[{module, :*, :*}]
 
     configuration && Keyword.get(configuration, interception_type)
   end

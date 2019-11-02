@@ -37,11 +37,15 @@ defmodule Interceptor.Configurator do
   If instead of a `"Module.function/arity"` string, a function is already in
   the MFA tuple format, i.e., it is already written as {Module, :function, 2},
   instead of `"Module.function/2"`, the transformation won't do nothing.
+
+  The intercepted function can now have a `*` for its `arity` or
+  `function_name` and `arity` on both tuple-based and
+  string-based format (e.g. `{Module, :*, :*}` or `Module.*/*`).
   """
   def transform_streamlined_config_to_tuple_config(intercept_config) do
     intercept_config
     |> Enum.map(fn {mfa_to_intercept, callbacks} ->
-      to_intercept = Utils.get_mfa_from_string(mfa_to_intercept)
+      to_intercept = Utils.get_intercepted_mfa_from_string(mfa_to_intercept)
 
       {to_intercept, convert_callbacks_to_mfa(callbacks)}
     end)
