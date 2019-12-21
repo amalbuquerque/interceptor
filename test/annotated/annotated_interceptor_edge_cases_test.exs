@@ -35,6 +35,22 @@ defmodule AnnotatedInterceptorEdgeCasesTest do
     end
   end
 
+  describe "module with functions whose arguments are pattern-matching on atoms" do
+    test "it intercepts the function as expected" do
+      {:ok, _pid} = spawn_agent()
+
+      result = AnnotatedInterceptedEdgeCases1.intercept_pattern_match_atom_argument(1, :normal)
+
+      callback_calls = get_agent_messages()
+
+      [{_started_at, _ended_at, callback_result, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == callback_result
+      assert intercepted_mfa == {AnnotatedInterceptedEdgeCases1, :intercept_pattern_match_atom_argument, [1, :normal]}
+    end
+  end
+
   describe "custom intercept attribute and functions with argument using `<>`" do
     test "it passes the argument with the prefix before `<>`" do
       {:ok, _pid} = spawn_agent()

@@ -22,6 +22,11 @@ defmodule AnnotatedInterceptedEdgeCases1 do
 
   @intercept true
   def intercept_with_prefix("some_prefix:" <> abc), do: abc
+
+  @intercept true
+  def intercept_pattern_match_atom_argument(a, :normal) do
+    "Normal #{a}"
+  end
 end
 
 defmodule AnnotatedInterceptedEdgeCases2 do

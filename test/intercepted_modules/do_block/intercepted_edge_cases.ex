@@ -21,5 +21,9 @@ defmodule InterceptedEdgeCases1 do
     def to_intercept(a, b, _to_ignore), do: "#{a} #{b}"
 
     def intercept_with_prefix("some_prefix:" <> suffix), do: suffix
+
+    def intercept_pattern_match_atom_argument(a, :normal) do
+      "Normal #{a}"
+    end
   end
 end

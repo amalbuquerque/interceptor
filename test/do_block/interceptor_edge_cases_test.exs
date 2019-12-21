@@ -33,6 +33,20 @@ defmodule InterceptorEdgeCasesTest do
       assert result == callback_result
       assert intercepted_mfa == {InterceptedEdgeCases1, :to_intercept, [1, 2, :arg_cant_be_intercepted]}
     end
+
+    test "it intercepts the function with an argument pattern matching on atom value" do
+      {:ok, _pid} = spawn_agent()
+
+      result = InterceptedEdgeCases1.intercept_pattern_match_atom_argument(1, :normal)
+
+      callback_calls = get_agent_messages()
+
+      [{_started_at, _ended_at, callback_result, intercepted_mfa}] = callback_calls
+
+      assert length(callback_calls) == 1
+      assert result == callback_result
+      assert intercepted_mfa == {InterceptedEdgeCases1, :intercept_pattern_match_atom_argument, [1, :normal]}
+    end
   end
 
   defp spawn_agent() do

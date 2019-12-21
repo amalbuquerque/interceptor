@@ -27,6 +27,61 @@ defmodule FunctionArgumentsTest do
       |> Enum.each(&assert_ast_match(&1))
     end
 
+    test "it handles arguments pattern matching on atoms" do
+      function_header = get_function_header("def abc(:an_atom), do: 123")
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
+
+      {args_names, args_ast} = result
+
+      assert length(args_ast) == 1
+
+      assert {:=, [], [:an_atom, {hd(args_names), [], nil}]} == hd(args_ast)
+    end
+
+    test "it handles arguments pattern matching on integers" do
+      function_header = get_function_header("def abc(123), do: 456")
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
+
+      {args_names, args_ast} = result
+
+      assert length(args_ast) == 1
+
+      assert {:=, [], [123, {hd(args_names), [], nil}]} == hd(args_ast)
+    end
+
+    test "it handles arguments pattern matching on binaries" do
+      function_header = get_function_header(~s[def abc("zyx"), do: 456])
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
+
+      {args_names, args_ast} = result
+
+      assert length(args_ast) == 1
+
+      assert {:=, [], ["zyx", {hd(args_names), [], nil}]} == hd(args_ast)
+    end
+
+    test "it handles arguments pattern matching on tuples" do
+      function_header = get_function_header(~s[def abc({1, 2}), do: 456])
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
+
+      {args_names, args_ast} = result
+
+      assert length(args_ast) == 1
+
+      assert {:=, [], [{1, 2}, {hd(args_names), [], nil}]} == hd(args_ast)
+    end
+
+    test "it handles arguments pattern matching on lists" do
+      function_header = get_function_header("def abc([1, 2, 3, 4]), do: 456")
+      result = FunctionArguments.get_args_names_and_new_args_list(function_header)
+
+      {args_names, args_ast} = result
+
+      assert length(args_ast) == 1
+
+      assert {:=, [], [[1, 2, 3, 4], {hd(args_names), [], nil}]} == hd(args_ast)
+    end
+
     test "it handles tuple destructure" do
       function_header = get_function_header("def abc({x, y, z}), do: x+y+z")
       result = FunctionArguments.get_args_names_and_new_args_list(function_header)

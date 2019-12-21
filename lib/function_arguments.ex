@@ -154,9 +154,9 @@ defmodule Interceptor.FunctionArguments do
     {arg_name, arg_ast}
   end
 
-  defp get_arg_name_and_its_ast(arg_ast) when is_list(arg_ast) or is_tuple(arg_ast) or is_integer(arg_ast) or is_binary(arg_ast) do
+  defp get_arg_name_and_its_ast(arg_ast) when is_list(arg_ast) or is_tuple(arg_ast) or is_integer(arg_ast) or is_binary(arg_ast) or is_atom(arg_ast) do
     random_name = Utils.random_atom()
-    #
+
     # arg variables always have their context as nil
     random_variable = Macro.var(random_name, nil)
 

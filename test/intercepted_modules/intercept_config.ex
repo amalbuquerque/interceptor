@@ -44,6 +44,7 @@ defmodule InterceptConfig do
     # edge cases
     {InterceptedEdgeCases1, :to_intercept, 3} => [on_success: {EdgeCases.Callbacks, :success_cb, 3}, on_error: {EdgeCases.Callbacks, :error_cb, 3}],
     {InterceptedEdgeCases1, :intercept_with_prefix, 1} => [on_success: {EdgeCases.Callbacks, :success_cb, 3}, on_error: {EdgeCases.Callbacks, :error_cb, 3}],
+    {InterceptedEdgeCases1, :intercept_pattern_match_atom_argument, 2} => [on_success: {EdgeCases.Callbacks, :success_cb, 3}, on_error: {EdgeCases.Callbacks, :error_cb, 3}],
 
     # wildcarded callbacks
     {InterceptedWildcardedMfa1, :foo, :*} => [on_success: {WildcardedMfa.Callbacks, :success_cb, 3}, on_error: {WildcardedMfa.Callbacks, :error_cb, 3}],
@@ -96,6 +97,7 @@ defmodule InterceptConfig do
     # edge cases
     {AnnotatedInterceptedEdgeCases1, :to_intercept, 3} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
     {AnnotatedInterceptedEdgeCases1, :intercept_with_prefix, 1} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
+    {AnnotatedInterceptedEdgeCases1, :intercept_pattern_match_atom_argument, 2} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
     {AnnotatedInterceptedEdgeCases2, :to_intercept, 3} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
     {AnnotatedInterceptedEdgeCases2, :intercept_with_prefix, 1} => [on_success: {AnnotatedEdgeCases.Callbacks, :success_cb, 3}, on_error: {AnnotatedEdgeCases.Callbacks, :error_cb, 3}],
 
