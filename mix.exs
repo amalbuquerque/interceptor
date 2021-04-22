@@ -13,7 +13,12 @@ defmodule Interceptor.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       docs: docs(),
       test_coverage: [tool: ExCoveralls],
-      preferred_cli_env: [coveralls: :test, "coveralls.detail": :test, "coveralls.post": :test, "coveralls.html": :test]
+      preferred_cli_env: [
+        coveralls: :test,
+        "coveralls.detail": :test,
+        "coveralls.post": :test,
+        "coveralls.html": :test
+      ]
     ]
   end
 
@@ -25,9 +30,9 @@ defmodule Interceptor.MixProject do
 
   defp deps do
     [
-      {:ex_doc, "~> 0.21", only: :dev},
-      {:mox, "0.5.1", only: :test},
-      {:excoveralls, "~> 0.12.1", only: :test},
+      {:ex_doc, "~> 0.24", only: :dev},
+      {:mox, "1.0.0", only: :test},
+      {:excoveralls, "~> 0.13.4", only: :test}
     ]
   end
 
@@ -52,7 +57,7 @@ defmodule Interceptor.MixProject do
       maintainers: ["André Albuquerque"],
       links: %{
         Github: "https://github.com/amalbuquerque/interceptor"
-      },
+      }
     ]
   end
 end
