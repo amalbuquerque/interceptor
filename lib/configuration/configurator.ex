@@ -26,7 +26,7 @@ defmodule Interceptor.Configurator do
 
   @doc """
   This function converts a map or a list of 2-element tuples (i.e. any structure
-  that can be iterated with `Enum.map/1` as a list of 2-element tuples) into a
+  that can be iterated with `Enum.map/2` as a list of 2-element tuples) into a
   "proper" (i.e. tuple-based) intercept configuration map. Each
   element is a `{mfa_to_intercept, callbacks}` tuple, where `mfa_to_intercept`
   is the MFA of the function to intercept as a `"Module.function/arity"` string,

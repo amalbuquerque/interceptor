@@ -15,7 +15,7 @@ dependencies in `mix.exs`:
 ```elixir
 def deps do
   [
-    {:interceptor, "~> 0.5.3"}
+    {:interceptor, "~> 0.5.4"}
   ]
 end
 ```
