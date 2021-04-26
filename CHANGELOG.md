@@ -2,6 +2,11 @@
 
 - None at this time :)
 
+# Changelog for v0.5.4
+
+- Bump `mox`, `ex_doc` and `excoveralls` library versions;
+- Allow interception of functions pattern-matching on atom literals, e.g. `def foo(:bar), do: 123`
+
 # Changelog for v0.5.3
 
 * Allow the usage of wildcards when configuring the interception callbacks for a given function, i.e., several intercepted functions can now be configured with a single interception configuration entry by declaring the intercepted function as `{Intercepted, :*, :*}` or `"Intercepted.*/*"`;
